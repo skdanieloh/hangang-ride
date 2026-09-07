@@ -28,14 +28,15 @@ export const BIKES: BikeSpec[] = [
   },
   {
     id: "fixie",
-    name: "Black Fixie",
+    name: "Constantine Urbane",
     kind: "픽시",
     maxKmh: 65,
     accel: 22,
     brake: 18,
     turn: 1.62,
     massFeel: 0.88,
-    blurb: "검은 픽시. 브레이크 후드 없이, 드리프트가 됩니다. 최고 65km/h.",
+    blurb: "실버 에어로 픽시. CONSTANTINE 데칼, 후드 없이 드리프트. 최고 65km/h.",
+    photo: `${import.meta.env.BASE_URL}bikes/constantine-urbane.png`,
   },
   {
     id: "ttareungyi",

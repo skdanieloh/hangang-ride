@@ -12,6 +12,7 @@ function Wheel({
   rim = "#2a2a2a",
   spokes = 18,
   deep = false,
+  brand,
   motion,
 }: {
   position: [number, number, number];
@@ -20,6 +21,7 @@ function Wheel({
   rim?: string;
   spokes?: number;
   deep?: boolean;
+  brand?: string;
   motion?: MutableRefObject<BikeMotion>;
 }) {
   const rotor = useRef<THREE.Group>(null);
@@ -48,8 +50,74 @@ function Wheel({
             <meshStandardMaterial color="#d4d6d8" metalness={0.85} roughness={0.18} />
           </mesh>
         ))}
+        {brand &&
+          [0, 1, 2, 3].map((i) => {
+            const a = (i * Math.PI) / 2;
+            return (
+              <group key={brand + i}>
+                <Decal
+                  text={brand}
+                  width={0.2}
+                  height={0.028}
+                  position={[Math.cos(a) * (radius - 0.038), Math.sin(a) * (radius - 0.038), 0.016]}
+                  rotation={[Math.PI / 2, 0, a + Math.PI / 2]}
+                  color="#f4f4f4"
+                />
+                <Decal
+                  text={brand}
+                  width={0.2}
+                  height={0.028}
+                  position={[Math.cos(a) * (radius - 0.038), Math.sin(a) * (radius - 0.038), -0.016]}
+                  rotation={[Math.PI / 2, Math.PI, a + Math.PI / 2]}
+                  color="#f4f4f4"
+                />
+              </group>
+            );
+          })}
       </group>
     </group>
+  );
+}
+
+function Decal({
+  text,
+  position,
+  rotation = [0, 0, 0],
+  width,
+  height,
+  color = "#111111",
+  weight = "bold 64px sans-serif",
+}: {
+  text: string;
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  width: number;
+  height: number;
+  color?: string;
+  weight?: string;
+}) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d")!;
+    ctx.clearRect(0, 0, 512, 128);
+    ctx.fillStyle = color;
+    ctx.font = weight;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 256, 64);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 8;
+    return tex;
+  }, [text, color, weight]);
+
+  return (
+    <mesh position={position} rotation={rotation}>
+      <planeGeometry args={[width, height]} />
+      <meshBasicMaterial map={texture} transparent depthWrite={false} />
+    </mesh>
   );
 }
 
@@ -82,14 +150,15 @@ function Bar({
 }
 
 function TrackBars() {
+  const tape = "#2b2b2b";
   return (
     <group position={[0.46, 0.95, 0]}>
-      <Bar from={[-0.1, -0.13, 0]} to={[0.05, 0.01, 0]} r={0.011} color="#1b1b1b" />
-      <Bar from={[0.05, 0.01, -0.19]} to={[0.05, 0.01, 0.19]} r={0.01} color="#1a1a1a" />
+      <Bar from={[-0.1, -0.13, 0]} to={[0.05, 0.01, 0]} r={0.012} color="#1a1a1a" />
+      <Bar from={[0.05, 0.01, -0.19]} to={[0.05, 0.01, 0.19]} r={0.011} color={tape} />
       {([-1, 1] as const).map((side) => (
         <group key={side}>
-          <Bar from={[0.05, 0.01, 0.19 * side]} to={[0.08, -0.09, 0.19 * side]} r={0.01} color="#1a1a1a" />
-          <Bar from={[0.08, -0.09, 0.19 * side]} to={[-0.01, -0.15, 0.19 * side]} r={0.01} color="#1a1a1a" />
+          <Bar from={[0.05, 0.01, 0.19 * side]} to={[0.09, -0.1, 0.19 * side]} r={0.011} color={tape} />
+          <Bar from={[0.09, -0.1, 0.19 * side]} to={[-0.02, -0.17, 0.19 * side]} r={0.011} color={tape} />
         </group>
       ))}
     </group>
@@ -199,29 +268,53 @@ function FixieDrive() {
         <meshStandardMaterial color="#cfd3d6" metalness={0.7} />
       </mesh>
       <mesh position={[0.08, 0.29, 0.05]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.078, 0.007, 8, 20]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.55} />
+        <cylinderGeometry args={[0.082, 0.082, 0.012, 32]} />
+        <meshStandardMaterial color="#151515" metalness={0.55} />
       </mesh>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} position={[0.08, 0.29, 0.05]} rotation={[Math.PI / 2, 0, (i / 5) * Math.PI]}>
+          <boxGeometry args={[0.13, 0.01, 0.018]} />
+          <meshStandardMaterial color="#111" metalness={0.4} />
+        </mesh>
+      ))}
       <mesh geometry={chain}>
-        <meshStandardMaterial color="#2f2f2f" metalness={0.75} roughness={0.3} />
+        <meshStandardMaterial color="#b8bcbf" metalness={0.75} roughness={0.3} />
       </mesh>
+      {([-1, 1] as const).map((side) => (
+        <group key={side} position={[0.08, 0.29, 0.08 * side]}>
+          <mesh>
+            <boxGeometry args={[0.1, 0.02, 0.06]} />
+            <meshStandardMaterial color="#111" />
+          </mesh>
+          <mesh position={[0.02, 0.035, 0]} rotation={[Math.PI / 2, 0, 0.2]}>
+            <torusGeometry args={[0.038, 0.007, 6, 14, Math.PI * 1.1]} />
+            <meshStandardMaterial color="#1a1a1a" />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
 
 function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
+  const silver = "#c2c6ca";
+  const downtube: [[number, number, number], [number, number, number]] = [
+    [-0.18, 0.8, 0],
+    [0.07, 0.28, 0],
+  ];
+  const dtAngle = Math.atan2(downtube[1][1] - downtube[0][1], downtube[1][0] - downtube[0][0]);
   return (
     <group>
-      <Wheel position={[-0.52, 0.33, 0]} tire={0.013} deep rim="#111" spokes={20} motion={motion} />
-      <Wheel position={[0.52, 0.33, 0]} tire={0.013} deep rim="#111" spokes={20} motion={motion} />
-      <Bar from={[-0.18, 0.8, 0]} to={[0.36, 0.78, 0]} color="#111" r={0.018} />
-      <Bar from={[-0.18, 0.8, 0]} to={[0.06, 0.28, 0]} color="#111" r={0.018} />
-      <Bar from={[0.36, 0.78, 0]} to={[0.06, 0.28, 0]} color="#111" r={0.017} />
-      {([-0.036, 0.036] as const).map((z) => (
+      <Wheel position={[-0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={20} brand="VELOCIDAD" motion={motion} />
+      <Wheel position={[0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={16} brand="VELOCIDAD" motion={motion} />
+      <Bar from={[-0.18, 0.8, 0]} to={[0.36, 0.79, 0]} color={silver} r={0.024} />
+      <Bar from={downtube[0]} to={downtube[1]} color={silver} r={0.03} />
+      <Bar from={[0.36, 0.79, 0]} to={[0.08, 0.34, 0]} color={silver} r={0.022} />
+      {([-0.038, 0.038] as const).map((z) => (
         <group key={z}>
-          <Bar from={[-0.18, 0.8, z]} to={[-0.52, 0.33, z]} color="#111" r={0.012} />
-          <Bar from={[0.06, 0.28, z]} to={[-0.58, 0.33, z]} color="#111" r={0.011} />
-          <Bar from={[0.36, 0.78, z]} to={[0.52, 0.33, z]} color="#111" r={0.011} />
+          <Bar from={[-0.18, 0.8, z]} to={[-0.52, 0.33, z]} color={silver} r={0.014} />
+          <Bar from={[0.06, 0.28, z]} to={[-0.56, 0.33, z]} color={silver} r={0.013} />
+          <Bar from={[0.36, 0.79, z]} to={[0.52, 0.33, z]} color={silver} r={0.012} />
           <mesh position={[-0.56, 0.33, z]}>
             <boxGeometry args={[0.07, 0.04, 0.02]} />
             <meshStandardMaterial color="#1a1a1a" metalness={0.5} />
@@ -229,11 +322,67 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
           <Dropout position={[0.52, 0.33, z]} />
         </group>
       ))}
-      <Bar from={[-0.18, 0.8, 0]} to={[-0.18, 0.92, 0]} color="#111" r={0.01} />
-      <mesh position={[-0.18, 0.95, 0]}>
-        <boxGeometry args={[0.16, 0.028, 0.07]} />
+      <Bar from={[-0.18, 0.8, 0]} to={[-0.18, 0.88, 0]} color={silver} r={0.014} />
+      <Bar from={[-0.18, 0.88, 0]} to={[-0.18, 0.97, 0]} color="#1a1a1a" r={0.013} />
+      <mesh position={[-0.18, 0.99, 0]}>
+        <boxGeometry args={[0.15, 0.024, 0.055]} />
         <meshStandardMaterial color="#151515" />
       </mesh>
+      {([-1, 1] as const).map((side) => (
+        <group key={side}>
+          <Decal
+            text="CONSTANTINE"
+            width={0.42}
+            height={0.055}
+            position={[-0.04, 0.52, 0.032 * side]}
+            rotation={[0, side > 0 ? 0 : Math.PI, dtAngle]}
+            color="#111"
+            weight="bold 70px sans-serif"
+          />
+          <Decal
+            text="urbane"
+            width={0.16}
+            height={0.03}
+            position={[0.18, 0.805, 0.026 * side]}
+            rotation={[0, side > 0 ? 0 : Math.PI, 0]}
+            color="#111"
+            weight="600 48px sans-serif"
+          />
+          <Decal
+            text="CONSTANTINE"
+            width={0.18}
+            height={0.028}
+            position={[-0.28, 0.32, 0.05 * side]}
+            rotation={[0, side > 0 ? 0 : Math.PI, 0.05]}
+            color="#111"
+            weight="bold 52px sans-serif"
+          />
+          <Decal
+            text="urbane"
+            width={0.12}
+            height={0.024}
+            position={[0.46, 0.52, 0.02 * side]}
+            rotation={[0, side > 0 ? 0 : Math.PI, -1.05]}
+            color="#111"
+            weight="600 44px sans-serif"
+          />
+          <Decal
+            text="VELOCIDAD"
+            width={0.09}
+            height={0.02}
+            position={[-0.18, 0.99, 0.03 * side]}
+            rotation={[0, side > 0 ? 0 : Math.PI, 0]}
+            color="#f3f3f3"
+            weight="bold 48px sans-serif"
+          />
+        </group>
+      ))}
+      {[0.02, 0.08, 0.14].map((x) => (
+        <mesh key={x} position={[x, 0.795, 0]}>
+          <boxGeometry args={[0.05, 0.028, 0.052]} />
+          <meshStandardMaterial color="#4a4e52" />
+        </mesh>
+      ))}
       <TrackBars />
       <FixieDrive />
     </group>
@@ -274,6 +423,28 @@ function RoadBike({
       </mesh>
       <DropBars />
       <Drivetrain />
+      {([-1, 1] as const).map((side) => (
+        <group key={side}>
+          <Decal
+            text="GIANT"
+            width={0.28}
+            height={0.05}
+            position={[-0.04, 0.54, 0.022 * side]}
+            rotation={[0, side > 0 ? 0 : Math.PI, Math.atan2(0.29 - 0.82, 0.07 - -0.2)]}
+            color="#1a1a1a"
+            weight="bold 72px sans-serif"
+          />
+          <Decal
+            text="SCR"
+            width={0.12}
+            height={0.04}
+            position={[0.26, 0.58, 0.022 * side]}
+            rotation={[0, side > 0 ? 0 : Math.PI, Math.atan2(0.29 - topY, 0.07 - 0.38)]}
+            color="#1a1a1a"
+            weight="bold 64px sans-serif"
+          />
+        </group>
+      ))}
     </group>
   );
 }

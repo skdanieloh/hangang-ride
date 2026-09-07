@@ -21,8 +21,8 @@ export function SelectScreen() {
             {bike.photo ? (
               <img src={bike.photo} alt={bike.name} />
             ) : (
-              <div className="bike-fallback" style={{ background: "#1c2428", color: "#7dffb2" }}>
-                Black Fixie
+              <div className="bike-fallback" style={{ background: "#c2c6ca", color: "#111" }}>
+                Constantine Urbane
               </div>
             )}
             <div>

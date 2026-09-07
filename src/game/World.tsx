@@ -156,7 +156,7 @@ export function World() {
         name: spot.name,
         kind: spot.kind,
         position: [p.x, 0, p.z] as [number, number, number],
-        yaw: yaw + Math.PI,
+        yaw,
       };
     });
 

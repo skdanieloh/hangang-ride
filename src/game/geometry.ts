@@ -24,7 +24,7 @@ export function makeRibbon(
     const t = tStart + (i / segments) * (tEnd - tStart);
     curve.getPointAt(t, center);
     curve.getTangentAt(t, tan);
-    side.crossVectors(up, tan).normalize();
+    side.crossVectors(tan, up).normalize();
     if (side.lengthSq() < 0.0001) side.set(1, 0, 0);
     const mid = lateral !== 0 ? side.clone().multiplyScalar(lateral) : null;
     const hx = width / 2;
@@ -35,7 +35,7 @@ export function makeRibbon(
     uvs.push(0, (t * length) / 8, 1, (t * length) / 8);
     if (i < segments) {
       const a = i * 2;
-      indices.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+      indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
   }
 
@@ -50,7 +50,7 @@ export function makeRibbon(
 export function framesAt(curve: THREE.CatmullRomCurve3, t: number) {
   const p = curve.getPointAt(THREE.MathUtils.clamp(t, 0, 1));
   const tan = curve.getTangentAt(THREE.MathUtils.clamp(t, 0, 1));
-  const side = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), tan).normalize();
+  const side = new THREE.Vector3().crossVectors(tan, new THREE.Vector3(0, 1, 0)).normalize();
   if (side.lengthSq() < 0.0001) side.set(1, 0, 0);
   const yaw = Math.atan2(tan.x, tan.z);
   return { p, tan, side, yaw };

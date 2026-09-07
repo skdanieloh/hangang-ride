@@ -4,6 +4,7 @@ import { Sky } from "@react-three/drei";
 import * as THREE from "three";
 import { getBike, type BikeId } from "../data/bikes";
 import { createRouteCurve, nearestLandmark } from "../data/route";
+import { ROAD_Y } from "./geometry";
 import { getState, setState, type RemoteRider } from "../state/store";
 import { emitRide } from "../net/socket";
 import { BikeModel, type BikeMotion } from "./BikeModels";
@@ -34,6 +35,7 @@ function Rider({
   tan.copy(curve.getTangentAt(THREE.MathUtils.clamp(t, 0, 1)));
   bin.set(-tan.z, 0, tan.x).normalize();
   pos.addScaledVector(bin, offset);
+  pos.y += ROAD_Y;
   const yaw = Math.atan2(tan.x, tan.z) + heading;
 
   return (
@@ -126,6 +128,7 @@ function LocalBike({
     curve.getTangentAt(t, tan);
     bin.set(-tan.z, 0, tan.x).normalize();
     tmp.addScaledVector(bin, offsetRef.current);
+    tmp.y += ROAD_Y;
 
     const yaw = Math.atan2(tan.x, tan.z) + headingRef.current;
     motion.current.speed = speedRef.current * feel;

@@ -1,5 +1,8 @@
 import * as THREE from "three";
 
+/** 자전거길 노면 높이. 잔디·강보다 위에 올려 파묻히지 않게 한다. */
+export const ROAD_Y = 0.22;
+
 /** 수평(XZ)으로만 깔리는 길/잔디/강. Extrude는 커브에서 벽으로 뒤집힌다. */
 export function makeRibbon(
   curve: THREE.CatmullRomCurve3,

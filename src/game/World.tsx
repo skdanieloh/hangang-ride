@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { ARA_END, BRIDGES, GIMPO_END, HANGANG_START, LANDMARKS, createRouteCurve, isGimpoPath, isHangang, isYeouido } from "../data/route";
-import { framesAt, makeRibbon } from "./geometry";
+import { ROAD_Y, framesAt, makeRibbon } from "./geometry";
 import { InstancedForest, IronFence, RiverBridge, Tower63, YeouinaruPark, Guardrail, StreetLamps, NationalAssembly } from "./scenery";
 import { apartmentTexture, asphaltTexture, grassTexture, officeTexture, plazaTexture, waterTexture } from "./textures";
 
@@ -62,18 +62,19 @@ export function World() {
 
   const built = useMemo(() => {
     const curve = createRouteCurve();
-    const pathGeo = makeRibbon(curve, 4.0, 0.03, 800, 0, true);
-    const walkGeo = makeRibbon(curve, 2.2, 0.02, 520, 3.0, true);
-    const shoulderGeo = makeRibbon(curve, 1.4, 0.018, 500, -2.6, true);
-    const riverGeo = makeRibbon(curve, 58, -0.32, 520, -28);
-    const yeouidoRiver = makeRibbon(curve, 78, -0.36, 160, -38, false, 0.9, 1);
-    const canalGeo = makeRibbon(curve, 18, -0.28, 180, -16, false, 0, ARA_END);
-    const parkGeo = makeRibbon(curve, 22, 0.0, 400, 12);
-    const plazaGeo = makeRibbon(curve, 16, 0.025, 90, 6, true, 0.9, 1);
-    const blueLine = makeRibbon(curve, 0.16, 0.05, 280, -1.75, true, 0, GIMPO_END);
-    const yellowLine = makeRibbon(curve, 0.1, 0.046, 360, 0, true, HANGANG_START, 1);
-    const highwayGeo = makeRibbon(curve, 11, 0.05, 220, 15, false, 0, GIMPO_END);
-    const bermGeo = makeRibbon(curve, 4.5, 0.35, 180, 6.4, false, 0, GIMPO_END);
+    const pathGeo = makeRibbon(curve, 4.2, ROAD_Y, 800, 0, true);
+    const deckGeo = makeRibbon(curve, 5.4, 0.04, 800, 0, true);
+    const walkGeo = makeRibbon(curve, 2.0, ROAD_Y - 0.06, 520, 3.4, true);
+    const shoulderGeo = makeRibbon(curve, 1.6, ROAD_Y - 0.07, 500, -2.95, true);
+    const riverGeo = makeRibbon(curve, 58, -0.55, 520, -28);
+    const yeouidoRiver = makeRibbon(curve, 78, -0.6, 160, -38, false, 0.9, 1);
+    const canalGeo = makeRibbon(curve, 18, -0.5, 180, -16, false, 0, ARA_END);
+    const parkGeo = makeRibbon(curve, 20, -0.22, 400, 15);
+    const plazaGeo = makeRibbon(curve, 16, ROAD_Y - 0.04, 90, 7.4, true, 0.9, 1);
+    const blueLine = makeRibbon(curve, 0.16, ROAD_Y + 0.012, 280, -1.75, true, 0, GIMPO_END);
+    const yellowLine = makeRibbon(curve, 0.1, ROAD_Y + 0.01, 360, 0, true, HANGANG_START, 1);
+    const highwayGeo = makeRibbon(curve, 11, -0.02, 220, 16.5, false, 0, GIMPO_END);
+    const bermGeo = makeRibbon(curve, 4.5, 0.22, 180, 7.2, false, 0, GIMPO_END);
 
     const trees: { x: number; z: number; s: number }[] = [];
     const fences: { x: number; y: number; z: number; yaw: number }[] = [];
@@ -86,18 +87,18 @@ export function World() {
       const t = 0.003 + (i / 8500) * 0.994;
       const { p, side, yaw } = framesAt(curve, t);
       const fence = side.clone().multiplyScalar(-2.08);
-      fences.push({ x: p.x + fence.x, y: p.y, z: p.z + fence.z, yaw });
+      fences.push({ x: p.x + fence.x, y: ROAD_Y, z: p.z + fence.z, yaw });
       if (isGimpoPath(t) && i % 6 === 0) {
         const land = side.clone().multiplyScalar(4.4);
-        rails.push({ x: p.x + land.x, y: p.y, z: p.z + land.z, yaw });
+        rails.push({ x: p.x + land.x, y: ROAD_Y, z: p.z + land.z, yaw });
       }
       if (i % 20 === 0) {
         const land = side.clone().multiplyScalar(isGimpoPath(t) ? 5.6 : 3.8);
-        lamps.push({ x: p.x + land.x, y: p.y, z: p.z + land.z, yaw });
+        lamps.push({ x: p.x + land.x, y: ROAD_Y, z: p.z + land.z, yaw });
       }
       if (isGimpoPath(t) && i % 16 === 0) {
         const land = side.clone().multiplyScalar(5.2);
-        walls.push({ x: p.x + land.x, y: p.y, z: p.z + land.z, yaw });
+        walls.push({ x: p.x + land.x, y: ROAD_Y, z: p.z + land.z, yaw });
       }
     }
 
@@ -147,7 +148,7 @@ export function World() {
     const signs = LANDMARKS.map((mark) => {
       const { p, side, yaw } = framesAt(curve, mark.t);
       const off = side.clone().multiplyScalar(4.8);
-      return { name: mark.name, position: [p.x + off.x, p.y, p.z + off.z] as [number, number, number], yaw };
+      return { name: mark.name, position: [p.x + off.x, ROAD_Y, p.z + off.z] as [number, number, number], yaw };
     });
 
     const bridges = BRIDGES.map((spot) => {
@@ -173,6 +174,7 @@ export function World() {
 
     return {
       pathGeo,
+      deckGeo,
       walkGeo,
       shoulderGeo,
       riverGeo,
@@ -203,12 +205,12 @@ export function World() {
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2800, -0.65, -1800]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2800, -1.35, -1800]} receiveShadow>
         <planeGeometry args={[10000, 8000]} />
-        <meshStandardMaterial map={grass} roughness={1} />
+        <meshStandardMaterial map={grass} roughness={1} polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={2} />
       </mesh>
       <mesh geometry={built.parkGeo} receiveShadow>
-        <meshStandardMaterial map={grass} roughness={1} />
+        <meshStandardMaterial map={grass} roughness={1} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
       </mesh>
       <mesh geometry={built.plazaGeo} receiveShadow>
         <meshStandardMaterial map={plaza} roughness={0.92} />
@@ -234,8 +236,11 @@ export function World() {
       <mesh geometry={built.shoulderGeo} receiveShadow>
         <meshStandardMaterial color="#7a6b4d" roughness={1} />
       </mesh>
+      <mesh geometry={built.deckGeo} receiveShadow>
+        <meshStandardMaterial color="#6a5e4c" roughness={1} />
+      </mesh>
       <mesh geometry={built.pathGeo} receiveShadow>
-        <meshStandardMaterial map={asphalt} roughness={0.92} />
+        <meshStandardMaterial map={asphalt} roughness={0.92} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
       </mesh>
       <mesh geometry={built.blueLine}>
         <meshStandardMaterial color="#2f6fe0" />
@@ -290,11 +295,11 @@ export function World() {
       />
       <Tower63 position={built.towerPos} yaw={built.tower.yaw} />
 
-      <mesh position={[built.start.p.x, 0.06, built.start.p.z]} rotation={[0, built.start.yaw, 0]}>
+      <mesh position={[built.start.p.x, ROAD_Y + 0.04, built.start.p.z]} rotation={[0, built.start.yaw, 0]}>
         <boxGeometry args={[3.6, 0.08, 0.4]} />
         <meshStandardMaterial color="#7dffb2" />
       </mesh>
-      <mesh position={[built.end.p.x, 0.06, built.end.p.z]} rotation={[0, built.end.yaw, 0]}>
+      <mesh position={[built.end.p.x, ROAD_Y + 0.05, built.end.p.z]} rotation={[0, built.end.yaw, 0]}>
         <boxGeometry args={[3.6, 0.1, 0.45]} />
         <meshStandardMaterial color="#e37a3a" />
       </mesh>

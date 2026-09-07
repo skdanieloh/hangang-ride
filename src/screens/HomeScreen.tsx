@@ -8,7 +8,8 @@ export function HomeScreen() {
       <div className="brand">
         <small>Mobile 3D Ride</small>
         <h1>한강라이드</h1>
-        <p>아라뱃길에서 강서구를 지나 여의도까지. 로드·픽시·따릉이.</p>
+        <p>걸포동에서 한강 남단을 따라 여의나루역까지. 로드·픽시·따릉이.</p>
+        <p>아이폰: 공유 → 홈 화면에 추가. 한 번 열어 두면 밖에서 와이파이 없이 실행됩니다.</p>
       </div>
       <div className="field">
         <label>닉네임</label>

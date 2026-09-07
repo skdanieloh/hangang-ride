@@ -9,7 +9,7 @@ export function SelectScreen() {
       <div className="brand">
         <small>Bike Select</small>
         <h1>자전거 선택</h1>
-        <p>로드·픽시는 최고 65km/h, 따릉이는 36km/h.</p>
+        <p>걸포동에서 한강 남단을 따라 여의나루역까지. 로드·픽시·따릉이.</p>
       </div>
       <div className="bike-list">
         {BIKES.map((bike) => (

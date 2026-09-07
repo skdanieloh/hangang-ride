@@ -11,48 +11,59 @@ export type BridgeSpot = {
   kind: "girder" | "cable" | "climb";
 };
 
-export const ARA_END = 0.34;
+/** 아라뱃길~한강 합류. 그 뒤는 한강 남단 자전거길. */
+export const ARA_END = 0.26;
+export const HANGANG_START = 0.3;
 
 export const LANDMARKS: Landmark[] = [
-  { name: "아라뱃길", t: 0.015 },
-  { name: "걸포동", t: 0.1 },
-  { name: "고촌", t: 0.2 },
-  { name: "강서구", t: 0.32 },
-  { name: "김포대교", t: 0.38 },
-  { name: "마곡", t: 0.46 },
-  { name: "가양대교", t: 0.54 },
-  { name: "난지한강공원", t: 0.62 },
-  { name: "성산대교", t: 0.7 },
-  { name: "양화한강공원", t: 0.78 },
-  { name: "여의나루 공원", t: 0.86 },
-  { name: "여의도", t: 0.93 },
-  { name: "여의도 자전거길 종점", t: 0.985 },
+  { name: "걸포동", t: 0.008 },
+  { name: "아라뱃길", t: 0.07 },
+  { name: "고촌", t: 0.16 },
+  { name: "강서습지생태공원", t: 0.24 },
+  { name: "방화대교", t: 0.32 },
+  { name: "김포대교", t: 0.4 },
+  { name: "마곡", t: 0.48 },
+  { name: "가양대교", t: 0.56 },
+  { name: "염창", t: 0.64 },
+  { name: "성산대교", t: 0.72 },
+  { name: "양화대교", t: 0.78 },
+  { name: "선유도", t: 0.82 },
+  { name: "여의도", t: 0.9 },
+  { name: "여의나루역", t: 0.975 },
 ];
 
 export const BRIDGES: BridgeSpot[] = [
-  { name: "김포대교", t: 0.38, kind: "girder" },
-  { name: "가양대교", t: 0.54, kind: "girder" },
-  { name: "성산대교", t: 0.7, kind: "cable" },
-  { name: "양화대교", t: 0.8, kind: "cable" },
-  { name: "마포대교", t: 0.9, kind: "girder" },
+  { name: "방화대교", t: 0.32, kind: "girder" },
+  { name: "김포대교", t: 0.4, kind: "girder" },
+  { name: "가양대교", t: 0.56, kind: "girder" },
+  { name: "성산대교", t: 0.72, kind: "cable" },
+  { name: "양화대교", t: 0.78, kind: "cable" },
+  { name: "서강대교", t: 0.86, kind: "girder" },
+  { name: "마포대교", t: 0.93, kind: "girder" },
 ];
 
+/** 카카오 자전거 경로: 걸포동 → 한강 남단 → 여의나루. 거의 평지. */
 function buildRaw(): [number, number, number][] {
   const pts: [number, number, number][] = [];
   let x = 0;
   let z = 0;
+  const n = 96;
 
-  for (let i = 0; i <= 16; i++) {
-    const heading = 0.12 + Math.sin(i * 0.5) * 0.55;
-    x += Math.cos(heading) * 74;
-    z += Math.sin(heading) * 74;
-    pts.push([x, 0, z]);
-  }
-
-  for (let i = 1; i <= 48; i++) {
-    const heading = 0.4 + Math.sin(i * 0.18) * 0.85 + Math.cos(i * 0.09) * 0.38;
-    x += Math.cos(heading) * 86;
-    z += Math.sin(heading) * 86;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    let heading = 0.2;
+    if (t < 0.26) {
+      heading = 0.16 + Math.sin(t * 18) * 0.1;
+    } else if (t < 0.36) {
+      heading = 0.16 + (t - 0.26) * 2.2;
+    } else if (t < 0.84) {
+      heading = 0.4 + Math.sin((t - 0.36) * 6.2) * 0.26 + Math.cos((t - 0.36) * 2.8) * 0.1;
+    } else {
+      heading = 0.52 + Math.sin((t - 0.84) * 12) * 0.48;
+    }
+    const step = t < 0.26 ? 58 : 80;
+    x += Math.cos(heading) * step;
+    z += Math.sin(heading) * step;
     pts.push([x, 0, z]);
   }
   return pts;
@@ -80,6 +91,10 @@ export function isGimpoPath(t: number) {
   return t < 0.34;
 }
 
+export function isHangang(t: number) {
+  return t >= HANGANG_START;
+}
+
 export function isYeouido(t: number) {
-  return t >= 0.82;
+  return t >= 0.84;
 }

@@ -299,65 +299,43 @@ export function NationalAssembly({ position, yaw }: { position: [number, number,
 export function YeouinaruPark({ position, yaw }: { position: [number, number, number]; yaw: number }) {
   return (
     <group position={position} rotation={[0, yaw, 0]}>
-      <mesh position={[-16, 0.04, 8]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[28, 28]} />
-        <meshStandardMaterial color="#4f8a46" />
+      <mesh position={[0, 0.03, 10]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[42, 36]} />
+        <meshStandardMaterial color="#c6c3bb" roughness={0.95} />
       </mesh>
-      <mesh position={[-16, 0.07, 8]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[5, 5.8, 28]} />
-        <meshStandardMaterial color="#cfc6b4" />
-      </mesh>
-      <mesh position={[-16, 0.9, 8]}>
-        <cylinderGeometry args={[0.6, 0.9, 1.2, 12]} />
-        <meshStandardMaterial color="#8aa7b8" />
-      </mesh>
-      {[-10, -6, -2, 2].map((z) => (
-        <group key={z} position={[-22, 0, z]}>
-          <mesh position={[0, 0.22, 0]}>
-            <boxGeometry args={[1.4, 0.08, 0.4]} />
-            <meshStandardMaterial color="#6b4a2a" />
+      {[-8, 0, 8, 16].map((z) =>
+        [-10, 2, 14].map((x) => (
+          <mesh key={`${x}-${z}`} position={[x, 0.06, z]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[5.2, 2.4]} />
+            <meshStandardMaterial color="#b7c08a" roughness={1} />
           </mesh>
-          <mesh position={[-0.55, 0.2, 0]}>
-            <boxGeometry args={[0.08, 0.4, 0.08]} />
-            <meshStandardMaterial color="#6b4a2a" />
-          </mesh>
-          <mesh position={[0.55, 0.2, 0]}>
-            <boxGeometry args={[0.08, 0.4, 0.08]} />
-            <meshStandardMaterial color="#6b4a2a" />
-          </mesh>
-        </group>
-      ))}
-      <mesh position={[-12, 1.4, 16]}>
-        <cylinderGeometry args={[3.4, 3.6, 0.16, 8]} />
-        <meshStandardMaterial color="#d8c9a0" />
-      </mesh>
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[-12 + s * 2.4, 0.7, 16]}>
-          <boxGeometry args={[0.18, 1.4, 0.18]} />
-          <meshStandardMaterial color="#8a7a55" />
+        )),
+      )}
+      {[-12, -4, 4, 12, 18].map((z, i) => (
+        <mesh key={`lamp${z}`} position={[-6 + (i % 2) * 10, 3.4, z]}>
+          <cylinderGeometry args={[0.05, 0.07, 6.8, 6]} />
+          <meshStandardMaterial color="#1a1a1a" metalness={0.5} />
         </mesh>
       ))}
-      <mesh position={[-28, 1.7, 6]}>
-        <boxGeometry args={[5.2, 3.4, 3.6]} />
-        <meshStandardMaterial color="#5d6570" />
+      {[-6, 2, 10].map((z) => (
+        <mesh key={`bench${z}`} position={[8, 0.28, z]}>
+          <boxGeometry args={[1.8, 0.32, 0.42]} />
+          <meshStandardMaterial color="#ececec" />
+        </mesh>
+      ))}
+      <mesh position={[-14, 1.1, 4]}>
+        <boxGeometry args={[2.4, 2.2, 2.4]} />
+        <meshStandardMaterial color="#4a3428" />
       </mesh>
-      <mesh position={[-28, 3.6, 6.1]}>
-        <boxGeometry args={[2.4, 0.5, 0.12]} />
-        <meshBasicMaterial color="#e8e8e8" />
-      </mesh>
-      <mesh position={[-28, 0.2, 8.6]}>
-        <boxGeometry args={[3.2, 0.12, 3]} />
-        <meshStandardMaterial color="#c9c9c9" />
-      </mesh>
-      {[-20, -14, -8, -24, -18].map((x, i) => (
-        <group key={x} position={[x, 0, 20 + (i % 3) * 3]}>
-          <mesh position={[0, 0.7, 0]}>
-            <cylinderGeometry args={[0.12, 0.16, 1.4, 6]} />
+      {[-16, -8, 0, 8].map((x, i) => (
+        <group key={x} position={[x, 0, 18 + (i % 2) * 3]}>
+          <mesh position={[0, 0.8, 0]}>
+            <cylinderGeometry args={[0.1, 0.14, 1.6, 6]} />
             <meshStandardMaterial color="#5c3b1d" />
           </mesh>
-          <mesh position={[0, 1.9, 0]}>
-            <sphereGeometry args={[1.15, 8, 6]} />
-            <meshStandardMaterial color="#2c6f38" />
+          <mesh position={[0, 2.1, 0]}>
+            <sphereGeometry args={[1.05, 8, 6]} />
+            <meshStandardMaterial color="#3a6b3c" />
           </mesh>
         </group>
       ))}

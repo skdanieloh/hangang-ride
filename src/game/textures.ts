@@ -83,6 +83,42 @@ export function officeTexture() {
   });
 }
 
+export function apartmentTexture() {
+  return canvasTex(256, 512, (ctx) => {
+    ctx.fillStyle = "#d8cbb8";
+    ctx.fillRect(0, 0, 256, 512);
+    ctx.fillStyle = "#8eb4c8";
+    for (let y = 16; y < 500; y += 20) {
+      for (let x = 12; x < 246; x += 16) {
+        ctx.fillRect(x, y, 10, 12);
+      }
+    }
+    ctx.fillStyle = "rgba(90,70,50,0.18)";
+    for (let y = 8; y < 512; y += 20) ctx.fillRect(0, y, 256, 1);
+  });
+}
+
+export function plazaTexture() {
+  return canvasTex(256, 256, (ctx) => {
+    ctx.fillStyle = "#c5c2bb";
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.strokeStyle = "#b4b0a8";
+    ctx.lineWidth = 2;
+    for (let y = 0; y <= 256; y += 32) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(256, y);
+      ctx.stroke();
+    }
+    for (let x = 0; x <= 256; x += 48) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 256);
+      ctx.stroke();
+    }
+  });
+}
+
 export function concreteTexture() {
   return canvasTex(128, 128, (ctx) => {
     ctx.fillStyle = "#8b8f94";

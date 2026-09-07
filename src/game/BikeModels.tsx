@@ -341,46 +341,80 @@ function Ttareungyi({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
 }
 
 function Rider({ upright }: { upright: boolean }) {
-  const skin = "#e3b48a";
-  const suit = upright ? "#1f6b3a" : "#1a1a1a";
-  const tuck = upright ? 0.06 : 0.42;
+  const skin = "#d9a07a";
+  const hair = "#2a211c";
+  const jersey = upright ? "#1d6b3c" : "#1b1b1b";
+  const pants = upright ? "#1a1a1a" : "#151515";
+  const tuck = upright ? 0.04 : 0.38;
   return (
-    <group position={[upright ? 0.02 : 0.08, upright ? 0.78 : 0.64, 0]} rotation={[0, 0, tuck]}>
-      <mesh position={[0.02, 0.46, 0]}>
-        <sphereGeometry args={[0.075, 12, 12]} />
+    <group position={[upright ? 0.01 : 0.09, upright ? 0.74 : 0.62, 0]} rotation={[0, 0, tuck]}>
+      <mesh position={[0.01, 0.27, 0]}>
+        <capsuleGeometry args={[0.078, 0.2, 6, 10]} />
+        <meshStandardMaterial color={jersey} roughness={0.62} />
+      </mesh>
+      <mesh position={[0.01, 0.16, 0]}>
+        <sphereGeometry args={[0.07, 10, 8]} />
+        <meshStandardMaterial color={pants} roughness={0.7} />
+      </mesh>
+      <mesh position={[0.015, 0.4, 0]}>
+        <cylinderGeometry args={[0.032, 0.038, 0.07, 8]} />
         <meshStandardMaterial color={skin} roughness={0.55} />
       </mesh>
-      {!upright && (
-        <mesh position={[0.03, 0.5, 0]}>
-          <sphereGeometry args={[0.078, 10, 10]} />
-          <meshStandardMaterial color="#1c1c1c" />
+      <mesh position={[0.02, 0.5, 0]}>
+        <sphereGeometry args={[0.072, 14, 12]} />
+        <meshStandardMaterial color={skin} roughness={0.48} />
+      </mesh>
+      <mesh position={[0.01, 0.535, 0]} rotation={[0.15, 0, 0]}>
+        <sphereGeometry args={[0.074, 12, 10]} />
+        <meshStandardMaterial color={hair} roughness={0.85} />
+      </mesh>
+      {upright ? null : (
+        <mesh position={[0.03, 0.545, 0]} rotation={[0.4, 0, 0.15]}>
+          <sphereGeometry args={[0.078, 10, 8]} />
+          <meshStandardMaterial color="#171717" roughness={0.7} />
         </mesh>
       )}
-      <mesh position={[0, 0.28, 0]}>
-        <capsuleGeometry args={[0.07, 0.22, 5, 8]} />
-        <meshStandardMaterial color={suit} roughness={0.65} />
-      </mesh>
       {([-1, 1] as const).map((side) => (
-        <group key={`a${side}`}>
-          <mesh position={[0.12, 0.3, 0.07 * side]} rotation={[0.15 * side, 0, -1.05]}>
-            <capsuleGeometry args={[0.028, 0.16, 4, 6]} />
-            <meshStandardMaterial color={suit} />
+        <mesh key={`ear${side}`} position={[0.01, 0.5, 0.068 * side]}>
+          <sphereGeometry args={[0.018, 8, 6]} />
+          <meshStandardMaterial color={skin} roughness={0.55} />
+        </mesh>
+      ))}
+      {([-1, 1] as const).map((side) => (
+        <mesh key={`eye${side}`} position={[0.078, 0.51, 0.022 * side]}>
+          <sphereGeometry args={[0.008, 6, 6]} />
+          <meshStandardMaterial color="#1a1410" />
+        </mesh>
+      ))}
+      {([-1, 1] as const).map((side) => (
+        <group key={`arm${side}`}>
+          <mesh position={[0.1, 0.3, 0.08 * side]} rotation={[0.2 * side, 0, -1.12]}>
+            <capsuleGeometry args={[0.03, 0.15, 5, 8]} />
+            <meshStandardMaterial color={jersey} />
           </mesh>
-          <mesh position={[0.28, 0.22, 0.16 * side]} rotation={[0.1 * side, 0, -0.35]}>
-            <capsuleGeometry args={[0.024, 0.15, 4, 6]} />
-            <meshStandardMaterial color={skin} />
+          <mesh position={[0.26, 0.22, 0.15 * side]} rotation={[0.12 * side, 0, -0.38]}>
+            <capsuleGeometry args={[0.024, 0.13, 4, 8]} />
+            <meshStandardMaterial color={skin} roughness={0.5} />
+          </mesh>
+          <mesh position={[0.36, 0.18, 0.17 * side]}>
+            <sphereGeometry args={[0.022, 8, 6]} />
+            <meshStandardMaterial color="#222" />
           </mesh>
         </group>
       ))}
       {([-1, 1] as const).map((side) => (
-        <group key={`l${side}`}>
-          <mesh position={[-0.02, 0.08, 0.06 * side]} rotation={[0.15 * side, 0, 0.55]}>
-            <capsuleGeometry args={[0.032, 0.18, 4, 6]} />
-            <meshStandardMaterial color="#222" />
+        <group key={`leg${side}`}>
+          <mesh position={[-0.02, 0.06, 0.055 * side]} rotation={[0.12 * side, 0, 0.62]}>
+            <capsuleGeometry args={[0.036, 0.16, 5, 8]} />
+            <meshStandardMaterial color={pants} />
           </mesh>
-          <mesh position={[0.1, -0.08, 0.07 * side]} rotation={[0, 0, -0.35]}>
-            <capsuleGeometry args={[0.026, 0.16, 4, 6]} />
-            <meshStandardMaterial color="#222" />
+          <mesh position={[0.1, -0.1, 0.065 * side]} rotation={[0.04 * side, 0, -0.32]}>
+            <capsuleGeometry args={[0.028, 0.15, 4, 8]} />
+            <meshStandardMaterial color={pants} />
+          </mesh>
+          <mesh position={[0.2, -0.22, 0.07 * side]} rotation={[0, 0, 0.15]}>
+            <boxGeometry args={[0.1, 0.04, 0.045]} />
+            <meshStandardMaterial color="#111" roughness={0.8} />
           </mesh>
         </group>
       ))}

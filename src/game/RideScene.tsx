@@ -103,7 +103,7 @@ function LocalBike({
     if (drifting) speedRef.current *= Math.pow(0.48, dt);
     leanRef.current = THREE.MathUtils.damp(
       leanRef.current,
-      -steer * (drifting ? 0.42 : 0.18),
+      steer * (drifting ? 0.42 : 0.18),
       drifting ? 14 : 8,
       dt,
     );
@@ -240,8 +240,8 @@ export function RideScene() {
       {hud.finished && (
         <div className="finish">
           <div className="finish-card">
-            <h2>여의도 종점 도착</h2>
-            <p>고촌에서 여의도까지 {hud.elapsed.toFixed(1)}초</p>
+            <h2>여의나루역 도착</h2>
+            <p>걸포동에서 여의나루까지 {hud.elapsed.toFixed(1)}초</p>
             <button className="btn" onClick={() => setState({ screen: "home", roomCode: "", riders: [] })}>
               처음으로
             </button>

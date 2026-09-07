@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import * as THREE from "three";
-import { BRIDGES, LANDMARKS, createRouteCurve, isGimpoPath, isHangang, isYeouido } from "../data/route";
+import { ARA_END, BRIDGES, GIMPO_END, HANGANG_START, LANDMARKS, createRouteCurve, isGimpoPath, isHangang, isYeouido } from "../data/route";
 import { framesAt, makeRibbon } from "./geometry";
 import { InstancedForest, IronFence, RiverBridge, Tower63, YeouinaruPark, Guardrail, StreetLamps, NationalAssembly } from "./scenery";
 import { apartmentTexture, asphaltTexture, grassTexture, officeTexture, plazaTexture, waterTexture } from "./textures";
@@ -67,13 +67,13 @@ export function World() {
     const shoulderGeo = makeRibbon(curve, 1.4, 0.018, 500, -2.6, true);
     const riverGeo = makeRibbon(curve, 58, -0.32, 520, -28);
     const yeouidoRiver = makeRibbon(curve, 78, -0.36, 160, -38, false, 0.9, 1);
-    const canalGeo = makeRibbon(curve, 18, -0.28, 180, -16, false, 0, 0.34);
+    const canalGeo = makeRibbon(curve, 18, -0.28, 180, -16, false, 0, ARA_END);
     const parkGeo = makeRibbon(curve, 22, 0.0, 400, 12);
     const plazaGeo = makeRibbon(curve, 16, 0.025, 90, 6, true, 0.9, 1);
-    const blueLine = makeRibbon(curve, 0.16, 0.05, 280, -1.75, true, 0, 0.48);
-    const yellowLine = makeRibbon(curve, 0.1, 0.046, 360, 0, true, 0.4, 1);
-    const highwayGeo = makeRibbon(curve, 11, 0.05, 220, 15, false, 0, 0.48);
-    const bermGeo = makeRibbon(curve, 4.5, 0.35, 180, 6.4, false, 0, 0.48);
+    const blueLine = makeRibbon(curve, 0.16, 0.05, 280, -1.75, true, 0, GIMPO_END);
+    const yellowLine = makeRibbon(curve, 0.1, 0.046, 360, 0, true, HANGANG_START, 1);
+    const highwayGeo = makeRibbon(curve, 11, 0.05, 220, 15, false, 0, GIMPO_END);
+    const bermGeo = makeRibbon(curve, 4.5, 0.35, 180, 6.4, false, 0, GIMPO_END);
 
     const trees: { x: number; z: number; s: number }[] = [];
     const fences: { x: number; y: number; z: number; yaw: number }[] = [];
@@ -162,14 +162,14 @@ export function World() {
 
     const start = framesAt(curve, 0.004);
     const end = framesAt(curve, 0.992);
-    const tower = framesAt(curve, 0.92);
+    const tower = framesAt(curve, 0.96);
     const towerPos: [number, number, number] = [
       tower.p.x + tower.side.x * 34,
       0,
       tower.p.z + tower.side.z * 34,
     ];
-    const park = framesAt(curve, 0.94);
-    const assembly = framesAt(curve, 0.89);
+    const park = framesAt(curve, 0.97);
+    const assembly = framesAt(curve, 0.95);
 
     return {
       pathGeo,
@@ -203,7 +203,7 @@ export function World() {
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2800, -0.65, -1500]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2800, -0.65, -1800]} receiveShadow>
         <planeGeometry args={[10000, 8000]} />
         <meshStandardMaterial map={grass} roughness={1} />
       </mesh>

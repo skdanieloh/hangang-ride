@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { BikeId } from "../data/bikes";
 
-export type BikeMotion = { speed: number; lean: number };
+export type BikeMotion = { speed: number; lean: number; drifting?: boolean };
 
 function Wheel({
   position,
@@ -117,6 +117,31 @@ function Decal({
     <mesh position={position} rotation={rotation}>
       <planeGeometry args={[width, height]} />
       <meshBasicMaterial map={texture} transparent depthWrite={false} />
+    </mesh>
+  );
+}
+
+function TubePath({
+  points,
+  r,
+  color,
+}: {
+  points: [number, number, number][];
+  r: number;
+  color: string;
+}) {
+  const geometry = useMemo(() => {
+    const curve = new THREE.CatmullRomCurve3(
+      points.map((p) => new THREE.Vector3(...p)),
+      false,
+      "catmullrom",
+      0.12,
+    );
+    return new THREE.TubeGeometry(curve, 36, r, 8, false);
+  }, [points, r]);
+  return (
+    <mesh geometry={geometry}>
+      <meshStandardMaterial color={color} metalness={0.38} roughness={0.3} />
     </mesh>
   );
 }
@@ -298,21 +323,28 @@ function FixieDrive() {
 
 function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
   const silver = "#c2c6ca";
-  const downtube: [[number, number, number], [number, number, number]] = [
-    [-0.18, 0.8, 0],
-    [0.07, 0.28, 0],
-  ];
-  const dtAngle = Math.atan2(downtube[1][1] - downtube[0][1], downtube[1][0] - downtube[0][0]);
+  const rear: [number, number] = [-0.52, 0.33];
+  const wrapR = 0.4;
+  const seatCurve = useMemo(() => {
+    const pts: [number, number, number][] = [[0.07, 0.29, 0]];
+    for (let i = 0; i <= 12; i++) {
+      const a = 0.1 + (i / 12) * 1.02;
+      pts.push([rear[0] + wrapR * Math.cos(a), rear[1] + wrapR * Math.sin(a), 0]);
+    }
+    pts.push([-0.18, 0.81, 0]);
+    return pts;
+  }, []);
+  const dtAngle = Math.atan2(0.34 - 0.79, 0.08 - 0.36);
   return (
     <group>
       <Wheel position={[-0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={20} brand="VELOCIDAD" motion={motion} />
       <Wheel position={[0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={16} brand="VELOCIDAD" motion={motion} />
-      <Bar from={[-0.18, 0.8, 0]} to={[0.36, 0.79, 0]} color={silver} r={0.024} />
-      <Bar from={downtube[0]} to={downtube[1]} color={silver} r={0.03} />
-      <Bar from={[0.36, 0.79, 0]} to={[0.08, 0.34, 0]} color={silver} r={0.022} />
+      <Bar from={[-0.18, 0.81, 0]} to={[0.36, 0.79, 0]} color={silver} r={0.024} />
+      <Bar from={[0.36, 0.79, 0]} to={[0.08, 0.34, 0]} color={silver} r={0.03} />
+      <TubePath points={seatCurve} r={0.022} color={silver} />
       {([-0.038, 0.038] as const).map((z) => (
         <group key={z}>
-          <Bar from={[-0.18, 0.8, z]} to={[-0.52, 0.33, z]} color={silver} r={0.014} />
+          <Bar from={[-0.18, 0.81, z]} to={[-0.52, 0.33, z]} color={silver} r={0.014} />
           <Bar from={[0.06, 0.28, z]} to={[-0.56, 0.33, z]} color={silver} r={0.013} />
           <Bar from={[0.36, 0.79, z]} to={[0.52, 0.33, z]} color={silver} r={0.012} />
           <mesh position={[-0.56, 0.33, z]}>
@@ -322,7 +354,7 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
           <Dropout position={[0.52, 0.33, z]} />
         </group>
       ))}
-      <Bar from={[-0.18, 0.8, 0]} to={[-0.18, 0.88, 0]} color={silver} r={0.014} />
+      <Bar from={[-0.18, 0.81, 0]} to={[-0.18, 0.88, 0]} color={silver} r={0.014} />
       <Bar from={[-0.18, 0.88, 0]} to={[-0.18, 0.97, 0]} color="#1a1a1a" r={0.013} />
       <mesh position={[-0.18, 0.99, 0]}>
         <boxGeometry args={[0.15, 0.024, 0.055]} />
@@ -334,7 +366,7 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
             text="CONSTANTINE"
             width={0.42}
             height={0.055}
-            position={[-0.04, 0.52, 0.032 * side]}
+            position={[0.2, 0.54, 0.032 * side]}
             rotation={[0, side > 0 ? 0 : Math.PI, dtAngle]}
             color="#111"
             weight="bold 70px sans-serif"
@@ -343,7 +375,7 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
             text="urbane"
             width={0.16}
             height={0.03}
-            position={[0.18, 0.805, 0.026 * side]}
+            position={[0.16, 0.815, 0.026 * side]}
             rotation={[0, side > 0 ? 0 : Math.PI, 0]}
             color="#111"
             weight="600 48px sans-serif"
@@ -378,7 +410,7 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
         </group>
       ))}
       {[0.02, 0.08, 0.14].map((x) => (
-        <mesh key={x} position={[x, 0.795, 0]}>
+        <mesh key={x} position={[x, 0.8, 0]}>
           <boxGeometry args={[0.05, 0.028, 0.052]} />
           <meshStandardMaterial color="#4a4e52" />
         </mesh>
@@ -611,7 +643,7 @@ export function BikeModel({
     if (root.current) root.current.rotation.z = motion?.current.lean ?? 0;
   });
   return (
-    <group ref={root} scale={SCALE[bikeId]}>
+    <group ref={root} scale={SCALE[bikeId]} position={[0, 0.05, 0]}>
       <group rotation={[0, -Math.PI / 2, 0]}>
         {bikeId === "scr" && <RoadBike color="#c45b28" motion={motion} />}
         {bikeId === "fixie" && <FixieBike motion={motion} />}

@@ -129,6 +129,7 @@ function LocalBike({
     const yaw = Math.atan2(tan.x, tan.z) + headingRef.current;
     motion.current.speed = speedRef.current * feel;
     motion.current.lean = leanRef.current;
+    motion.current.drifting = drifting;
     if (group.current) {
       group.current.position.copy(tmp);
       group.current.rotation.set(0, yaw, 0);
@@ -165,9 +166,76 @@ function LocalBike({
   });
 
   return (
-    <group ref={group}>
-      <BikeModel bikeId={bike.id} motion={motion} />
-    </group>
+    <>
+      <group ref={group}>
+        <BikeModel bikeId={bike.id} motion={motion} />
+      </group>
+      <DriftMarks source={group} motion={motion} />
+    </>
+  );
+}
+
+const driftDummy = new THREE.Object3D();
+driftDummy.rotation.order = "YXZ";
+
+function DriftMarks({
+  source,
+  motion,
+}: {
+  source: MutableRefObject<THREE.Group | null>;
+  motion: MutableRefObject<BikeMotion>;
+}) {
+  const mesh = useRef<THREE.InstancedMesh>(null);
+  const marks = useRef<{ x: number; y: number; z: number; yaw: number; life: number }[]>([]);
+  const last = useRef(0);
+  const max = 240;
+
+  useFrame((_, dt) => {
+    const g = source.current;
+    const inst = mesh.current;
+    if (!g || !inst) return;
+    if (motion.current.drifting) {
+      const now = performance.now();
+      if (now - last.current > 28) {
+        last.current = now;
+        const yaw = g.rotation.y;
+        const sx = Math.cos(yaw);
+        const sz = -Math.sin(yaw);
+        for (const side of [-0.09, 0.09]) {
+          marks.current.push({
+            x: g.position.x + sx * side,
+            y: g.position.y + 0.044,
+            z: g.position.z + sz * side,
+            yaw,
+            life: 1,
+          });
+        }
+        if (marks.current.length > max) marks.current.splice(0, marks.current.length - max);
+      }
+    }
+    for (const mark of marks.current) mark.life -= dt * 0.09;
+    marks.current = marks.current.filter((mark) => mark.life > 0.05);
+    for (let i = 0; i < max; i++) {
+      const mark = marks.current[i];
+      if (!mark) {
+        driftDummy.position.set(0, -20, 0);
+        driftDummy.scale.set(0, 0, 0);
+      } else {
+        driftDummy.position.set(mark.x, mark.y, mark.z);
+        driftDummy.rotation.set(-Math.PI / 2, mark.yaw, 0);
+        driftDummy.scale.set(1, 1 + (1 - mark.life) * 0.35, mark.life);
+      }
+      driftDummy.updateMatrix();
+      inst.setMatrixAt(i, driftDummy.matrix);
+    }
+    inst.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <instancedMesh ref={mesh} args={[undefined, undefined, max]} frustumCulled={false}>
+      <planeGeometry args={[0.11, 0.62]} />
+      <meshBasicMaterial color="#1c140e" transparent opacity={0.62} depthWrite={false} />
+    </instancedMesh>
   );
 }
 

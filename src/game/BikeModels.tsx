@@ -121,27 +121,33 @@ function Decal({
   );
 }
 
-function TubePath({
-  points,
-  r,
-  color,
-}: {
-  points: [number, number, number][];
-  r: number;
-  color: string;
-}) {
+/** 앞 가장자리는 직선, 뒤만 뒷바퀴를 감싸는 컷아웃. */
+function AeroSeatTube({ color }: { color: string }) {
   const geometry = useMemo(() => {
-    const curve = new THREE.CatmullRomCurve3(
-      points.map((p) => new THREE.Vector3(...p)),
-      false,
-      "catmullrom",
-      0.12,
-    );
-    return new THREE.TubeGeometry(curve, 36, r, 8, false);
-  }, [points, r]);
+    const wx = -0.5;
+    const wy = 0.33;
+    const r = 0.356;
+    const shape = new THREE.Shape();
+    shape.moveTo(0.075, 0.255);
+    shape.lineTo(-0.09, 0.828);
+    shape.lineTo(-0.23, 0.828);
+    shape.lineTo(-0.255, 0.76);
+    const aTop = 1.18;
+    const aBot = 0.05;
+    for (let i = 0; i <= 18; i++) {
+      const a = aTop - (i / 18) * (aTop - aBot);
+      shape.lineTo(wx + r * Math.cos(a), wy + r * Math.sin(a));
+    }
+    shape.lineTo(0.02, 0.255);
+    shape.closePath();
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.044, bevelEnabled: false, curveSegments: 8 });
+    geo.translate(0, 0, -0.022);
+    geo.computeVertexNormals();
+    return geo;
+  }, []);
   return (
     <mesh geometry={geometry}>
-      <meshStandardMaterial color={color} metalness={0.38} roughness={0.3} />
+      <meshStandardMaterial color={color} metalness={0.42} roughness={0.28} />
     </mesh>
   );
 }
@@ -278,8 +284,8 @@ function FixieDrive() {
     const pts = [
       new THREE.Vector3(0.08, 0.35, 0.05),
       new THREE.Vector3(-0.2, 0.38, 0.05),
-      new THREE.Vector3(-0.54, 0.36, 0.05),
-      new THREE.Vector3(-0.54, 0.3, 0.05),
+      new THREE.Vector3(-0.5, 0.36, 0.05),
+      new THREE.Vector3(-0.5, 0.3, 0.05),
       new THREE.Vector3(-0.15, 0.23, 0.05),
       new THREE.Vector3(0.08, 0.23, 0.05),
     ];
@@ -288,7 +294,7 @@ function FixieDrive() {
   }, []);
   return (
     <group>
-      <mesh position={[-0.54, 0.33, 0.048]} rotation={[0, 0, Math.PI / 2]}>
+      <mesh position={[-0.5, 0.33, 0.048]} rotation={[0, 0, Math.PI / 2]}>
         <torusGeometry args={[0.042, 0.006, 8, 18]} />
         <meshStandardMaterial color="#cfd3d6" metalness={0.7} />
       </mesh>
@@ -323,31 +329,20 @@ function FixieDrive() {
 
 function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
   const silver = "#c2c6ca";
-  const rear: [number, number] = [-0.52, 0.33];
-  const wrapR = 0.4;
-  const seatCurve = useMemo(() => {
-    const pts: [number, number, number][] = [[0.07, 0.29, 0]];
-    for (let i = 0; i <= 12; i++) {
-      const a = 0.1 + (i / 12) * 1.02;
-      pts.push([rear[0] + wrapR * Math.cos(a), rear[1] + wrapR * Math.sin(a), 0]);
-    }
-    pts.push([-0.18, 0.81, 0]);
-    return pts;
-  }, []);
   const dtAngle = Math.atan2(0.34 - 0.79, 0.08 - 0.36);
   return (
     <group>
-      <Wheel position={[-0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={20} brand="VELOCIDAD" motion={motion} />
+      <Wheel position={[-0.5, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={20} brand="VELOCIDAD" motion={motion} />
       <Wheel position={[0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={16} brand="VELOCIDAD" motion={motion} />
       <Bar from={[-0.18, 0.81, 0]} to={[0.36, 0.79, 0]} color={silver} r={0.024} />
       <Bar from={[0.36, 0.79, 0]} to={[0.08, 0.34, 0]} color={silver} r={0.03} />
-      <TubePath points={seatCurve} r={0.022} color={silver} />
+      <AeroSeatTube color={silver} />
       {([-0.038, 0.038] as const).map((z) => (
         <group key={z}>
-          <Bar from={[-0.18, 0.81, z]} to={[-0.52, 0.33, z]} color={silver} r={0.014} />
-          <Bar from={[0.06, 0.28, z]} to={[-0.56, 0.33, z]} color={silver} r={0.013} />
+          <Bar from={[-0.18, 0.81, z]} to={[-0.5, 0.33, z]} color={silver} r={0.014} />
+          <Bar from={[0.06, 0.28, z]} to={[-0.54, 0.33, z]} color={silver} r={0.013} />
           <Bar from={[0.36, 0.79, z]} to={[0.52, 0.33, z]} color={silver} r={0.012} />
-          <mesh position={[-0.56, 0.33, z]}>
+          <mesh position={[-0.54, 0.33, z]}>
             <boxGeometry args={[0.07, 0.04, 0.02]} />
             <meshStandardMaterial color="#1a1a1a" metalness={0.5} />
           </mesh>

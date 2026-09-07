@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { concreteTexture, goldGlassTexture } from "./textures";
+import { concreteTexture, goldGlassTexture, hanwhaLogoTexture } from "./textures";
 
 function Label({ text, width = 10 }: { text: string; width?: number }) {
   const texture = useMemo(() => {
@@ -97,26 +97,91 @@ export function RiverBridge({
   );
 }
 
-export function Tower63({ position }: { position: [number, number, number] }) {
+export function Tower63({
+  position,
+  yaw = 0,
+}: {
+  position: [number, number, number];
+  yaw?: number;
+}) {
   const glass = useMemo(() => {
     const tex = goldGlassTexture();
-    tex.repeat.set(2, 4);
+    tex.repeat.set(6, 18);
     return tex;
+  }, []);
+  const logo = useMemo(() => hanwhaLogoTexture(), []);
+  const body = useMemo(() => {
+    const w = 9.2;
+    const d = 20;
+    const bulge = 3.2;
+    const shape = new THREE.Shape();
+    shape.moveTo(-w + 2.4, -d);
+    shape.lineTo(w - 2.4, -d);
+    shape.quadraticCurveTo(w, -d, w, -d + 3.2);
+    shape.quadraticCurveTo(w + bulge, 0, w, d - 3.2);
+    shape.quadraticCurveTo(w, d, w - 2.4, d);
+    shape.lineTo(-w + 2.4, d);
+    shape.quadraticCurveTo(-w, d, -w, d - 3.2);
+    shape.quadraticCurveTo(-w - bulge, 0, -w, -d + 3.2);
+    shape.quadraticCurveTo(-w, -d, -w + 2.4, -d);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 108, bevelEnabled: false, curveSegments: 18 });
+    geo.rotateX(-Math.PI / 2);
+    geo.computeVertexNormals();
+    return geo;
   }, []);
 
   return (
-    <group position={position}>
-      <mesh position={[0, 48, 0]}>
-        <boxGeometry args={[22, 96, 22]} />
-        <meshStandardMaterial map={glass} metalness={0.55} roughness={0.22} />
+    <group position={position} rotation={[0, yaw, 0]}>
+      <mesh geometry={body} position={[0, 0, 0]} castShadow>
+        <meshStandardMaterial
+          map={glass}
+          color="#e8c36a"
+          metalness={0.82}
+          roughness={0.16}
+          envMapIntensity={1.4}
+        />
       </mesh>
-      <mesh position={[0, 98, 0]}>
-        <boxGeometry args={[16, 6, 16]} />
-        <meshStandardMaterial color="#e6c56a" metalness={0.6} roughness={0.25} />
+      {[-1, 1].map((side) =>
+        [-17.6, 17.6].map((z) => (
+          <mesh key={`groove-${side}-${z}`} position={[side * 11.4, 54, z]}>
+            <boxGeometry args={[0.7, 108, 1.6]} />
+            <meshStandardMaterial color="#1a2430" metalness={0.35} roughness={0.45} />
+          </mesh>
+        )),
+      )}
+      {[28, 80].map((y) =>
+        [-1, 1].map((side) => (
+          <mesh key={`band-${y}-${side}`} position={[side * 12.15, y, 0]}>
+            <boxGeometry args={[0.45, 1.2, 40]} />
+            <meshStandardMaterial color="#243040" metalness={0.4} roughness={0.4} />
+          </mesh>
+        )),
+      )}
+      <mesh position={[0, 109.2, 0]}>
+        <boxGeometry args={[16, 2.4, 32]} />
+        <meshStandardMaterial color="#d7b056" metalness={0.7} roughness={0.28} />
       </mesh>
-      <mesh position={[0, 104, 0]}>
-        <boxGeometry args={[5, 8, 5]} />
-        <meshStandardMaterial color="#f0d789" metalness={0.65} />
+      <mesh position={[-4.5, 111.6, 6]}>
+        <boxGeometry args={[6, 3.2, 8]} />
+        <meshStandardMaterial color="#9aa0a6" metalness={0.45} roughness={0.4} />
+      </mesh>
+      <mesh position={[5, 111.2, -7]}>
+        <boxGeometry args={[5, 2.6, 6]} />
+        <meshStandardMaterial color="#8b9198" metalness={0.4} roughness={0.42} />
+      </mesh>
+      <mesh position={[-7.2, 122, 8]}>
+        <cylinderGeometry args={[0.28, 0.38, 22, 8]} />
+        <meshStandardMaterial color="#d8dde2" metalness={0.55} roughness={0.3} />
+      </mesh>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <mesh key={`stripe-${i}`} position={[-7.2, 113.5 + i * 3.6, 8]}>
+          <cylinderGeometry args={[0.3, 0.3, 1.7, 8]} />
+          <meshStandardMaterial color={i % 2 === 0 ? "#d92b2b" : "#f4f4f4"} />
+        </mesh>
+      ))}
+      <mesh position={[11.6, 98, -6]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[14, 3.6]} />
+        <meshBasicMaterial map={logo} transparent depthWrite={false} />
       </mesh>
     </group>
   );

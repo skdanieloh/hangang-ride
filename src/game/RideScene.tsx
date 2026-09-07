@@ -176,7 +176,6 @@ function LocalBike({
 }
 
 const driftDummy = new THREE.Object3D();
-driftDummy.rotation.order = "YXZ";
 
 function DriftMarks({
   source,
@@ -186,34 +185,55 @@ function DriftMarks({
   motion: MutableRefObject<BikeMotion>;
 }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
-  const marks = useRef<{ x: number; y: number; z: number; yaw: number; life: number }[]>([]);
-  const last = useRef(0);
-  const max = 240;
+  const marks = useRef<{ x: number; y: number; z: number; yaw: number; len: number; life: number }[]>([]);
+  const lastL = useRef<THREE.Vector3 | null>(null);
+  const lastR = useRef<THREE.Vector3 | null>(null);
+  const max = 360;
 
   useFrame((_, dt) => {
     const g = source.current;
     const inst = mesh.current;
     if (!g || !inst) return;
     if (motion.current.drifting) {
-      const now = performance.now();
-      if (now - last.current > 28) {
-        last.current = now;
-        const yaw = g.rotation.y;
-        const sx = Math.cos(yaw);
-        const sz = -Math.sin(yaw);
-        for (const side of [-0.09, 0.09]) {
-          marks.current.push({
-            x: g.position.x + sx * side,
-            y: g.position.y + 0.044,
-            z: g.position.z + sz * side,
-            yaw,
-            life: 1,
-          });
+      const yaw = g.rotation.y;
+      const fwdX = Math.sin(yaw);
+      const fwdZ = Math.cos(yaw);
+      const rightX = Math.cos(yaw);
+      const rightZ = -Math.sin(yaw);
+      const rearX = g.position.x - fwdX * 0.5;
+      const rearZ = g.position.z - fwdZ * 0.5;
+      const y = g.position.y + 0.042;
+      const tracks: [typeof lastL, number][] = [
+        [lastL, -0.09],
+        [lastR, 0.09],
+      ];
+      for (const [last, side] of tracks) {
+        const x = rearX + rightX * side;
+        const z = rearZ + rightZ * side;
+        if (!last.current) {
+          last.current = new THREE.Vector3(x, y, z);
+          continue;
         }
-        if (marks.current.length > max) marks.current.splice(0, marks.current.length - max);
+        const dx = x - last.current.x;
+        const dz = z - last.current.z;
+        const len = Math.hypot(dx, dz);
+        if (len < 0.1) continue;
+        marks.current.push({
+          x: (x + last.current.x) * 0.5,
+          y,
+          z: (z + last.current.z) * 0.5,
+          yaw: Math.atan2(dx, dz),
+          len: Math.min(len, 1.15),
+          life: 1,
+        });
+        last.current.set(x, y, z);
       }
+      if (marks.current.length > max) marks.current.splice(0, marks.current.length - max);
+    } else {
+      lastL.current = null;
+      lastR.current = null;
     }
-    for (const mark of marks.current) mark.life -= dt * 0.09;
+    for (const mark of marks.current) mark.life -= dt * 0.08;
     marks.current = marks.current.filter((mark) => mark.life > 0.05);
     for (let i = 0; i < max; i++) {
       const mark = marks.current[i];
@@ -222,8 +242,8 @@ function DriftMarks({
         driftDummy.scale.set(0, 0, 0);
       } else {
         driftDummy.position.set(mark.x, mark.y, mark.z);
-        driftDummy.rotation.set(-Math.PI / 2, mark.yaw, 0);
-        driftDummy.scale.set(1, 1 + (1 - mark.life) * 0.35, mark.life);
+        driftDummy.rotation.set(0, mark.yaw, 0);
+        driftDummy.scale.set(mark.life, 1, mark.len);
       }
       driftDummy.updateMatrix();
       inst.setMatrixAt(i, driftDummy.matrix);
@@ -233,8 +253,8 @@ function DriftMarks({
 
   return (
     <instancedMesh ref={mesh} args={[undefined, undefined, max]} frustumCulled={false}>
-      <planeGeometry args={[0.11, 0.62]} />
-      <meshBasicMaterial color="#1c140e" transparent opacity={0.62} depthWrite={false} />
+      <boxGeometry args={[0.055, 0.008, 1]} />
+      <meshBasicMaterial color="#1a120c" transparent opacity={0.7} depthWrite={false} />
     </instancedMesh>
   );
 }

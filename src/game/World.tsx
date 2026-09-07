@@ -63,16 +63,16 @@ export function World() {
   const built = useMemo(() => {
     const curve = createRouteCurve();
     const pathGeo = makeRibbon(curve, 4.0, 0.03, 560, 0, true);
-    const walkGeo = makeRibbon(curve, 2.2, 0.02, 420, 3.0, true);
-    const shoulderGeo = makeRibbon(curve, 1.4, 0.018, 400, -2.6, true);
-    const riverGeo = makeRibbon(curve, 52, -0.32, 400, -28);
-    const yeouidoRiver = makeRibbon(curve, 78, -0.36, 140, -38, false, 0.84, 1);
-    const parkGeo = makeRibbon(curve, 22, 0.0, 340, 12);
-    const plazaGeo = makeRibbon(curve, 16, 0.025, 80, 6, true, 0.86, 1);
-    const blueLine = makeRibbon(curve, 0.16, 0.05, 240, -1.75, true, 0, 0.34);
+    const walkGeo = makeRibbon(curve, 2.2, 0.02, 420, -3.0, true);
+    const shoulderGeo = makeRibbon(curve, 1.4, 0.018, 400, 2.6, true);
+    const riverGeo = makeRibbon(curve, 52, -0.32, 400, 28);
+    const yeouidoRiver = makeRibbon(curve, 78, -0.36, 140, 38, false, 0.84, 1);
+    const parkGeo = makeRibbon(curve, 22, 0.0, 340, -12);
+    const plazaGeo = makeRibbon(curve, 16, 0.025, 80, -6, true, 0.86, 1);
+    const blueLine = makeRibbon(curve, 0.16, 0.05, 240, 1.75, true, 0, 0.34);
     const yellowLine = makeRibbon(curve, 0.1, 0.046, 300, 0, true, 0.34, 1);
-    const highwayGeo = makeRibbon(curve, 11, 0.05, 180, 15, false, 0, 0.34);
-    const bermGeo = makeRibbon(curve, 4.5, 0.35, 160, 6.4, false, 0, 0.34);
+    const highwayGeo = makeRibbon(curve, 11, 0.05, 180, -15, false, 0, 0.34);
+    const bermGeo = makeRibbon(curve, 4.5, 0.35, 160, -6.4, false, 0, 0.34);
 
     const trees: { x: number; z: number; s: number }[] = [];
     const fences: { x: number; y: number; z: number; yaw: number }[] = [];
@@ -84,18 +84,18 @@ export function World() {
     for (let i = 0; i < 8500; i++) {
       const t = 0.003 + (i / 8500) * 0.994;
       const { p, side, yaw } = framesAt(curve, t);
-      const fence = side.clone().multiplyScalar(-2.08);
+      const fence = side.clone().multiplyScalar(2.08);
       fences.push({ x: p.x + fence.x, y: p.y, z: p.z + fence.z, yaw });
       if (isGimpoPath(t) && i % 6 === 0) {
-        const land = side.clone().multiplyScalar(4.4);
+        const land = side.clone().multiplyScalar(-4.4);
         rails.push({ x: p.x + land.x, y: p.y, z: p.z + land.z, yaw });
       }
       if (i % 20 === 0) {
-        const land = side.clone().multiplyScalar(isGimpoPath(t) ? 5.6 : 3.8);
+        const land = side.clone().multiplyScalar(isGimpoPath(t) ? -5.6 : -3.8);
         lamps.push({ x: p.x + land.x, y: p.y, z: p.z + land.z, yaw });
       }
       if (isGimpoPath(t) && i % 16 === 0) {
-        const land = side.clone().multiplyScalar(5.2);
+        const land = side.clone().multiplyScalar(-5.2);
         walls.push({ x: p.x + land.x, y: p.y, z: p.z + land.z, yaw });
       }
     }
@@ -105,20 +105,20 @@ export function World() {
       const { p, side, yaw } = framesAt(curve, t);
 
       if (isHangang(t) && i % 3 === 0) {
-        const park = side.clone().multiplyScalar(6.2 + (i % 5) * 0.7);
+        const park = side.clone().multiplyScalar(-6.2 - (i % 5) * 0.7);
         trees.push({ x: p.x + park.x, z: p.z + park.z, s: 0.85 + (i % 6) * 0.13 });
         if (i % 2 === 0) {
-          const extra = side.clone().multiplyScalar(10.4 + (i % 5) * 0.8);
+          const extra = side.clone().multiplyScalar(-10.4 - (i % 5) * 0.8);
           trees.push({ x: p.x + extra.x, z: p.z + extra.z, s: 1.05 + (i % 4) * 0.1 });
         }
       }
       if (isGimpoPath(t) && i % 4 === 0) {
-        const strip = side.clone().multiplyScalar(7.4);
+        const strip = side.clone().multiplyScalar(-7.4);
         trees.push({ x: p.x + strip.x, z: p.z + strip.z, s: 0.55 + (i % 3) * 0.08 });
       }
 
       if (isHangang(t) && !isYeouido(t) && i % 5 === 0) {
-        const city = side.clone().multiplyScalar(18 + (i % 5) * 1.4);
+        const city = side.clone().multiplyScalar(-18 - (i % 5) * 1.4);
         buildings.push({
           x: p.x + city.x,
           z: p.z + city.z,
@@ -130,7 +130,7 @@ export function World() {
         });
       }
       if (isYeouido(t) && i % 6 === 0) {
-        const city = side.clone().multiplyScalar(22 + (i % 4));
+        const city = side.clone().multiplyScalar(-22 - (i % 4));
         buildings.push({
           x: p.x + city.x,
           z: p.z + city.z,
@@ -145,7 +145,7 @@ export function World() {
 
     const signs = LANDMARKS.map((mark) => {
       const { p, side, yaw } = framesAt(curve, mark.t);
-      const off = side.clone().multiplyScalar(4.8);
+      const off = side.clone().multiplyScalar(-4.8);
       return { name: mark.name, position: [p.x + off.x, p.y, p.z + off.z] as [number, number, number], yaw };
     });
 
@@ -155,7 +155,7 @@ export function World() {
         name: spot.name,
         kind: spot.kind,
         position: [p.x, 0, p.z] as [number, number, number],
-        yaw: yaw + Math.PI,
+        yaw,
       };
     });
 
@@ -163,9 +163,9 @@ export function World() {
     const end = framesAt(curve, 0.992);
     const tower = framesAt(curve, 0.92);
     const towerPos: [number, number, number] = [
-      tower.p.x + tower.side.x * 34,
+      tower.p.x + tower.side.x * -34,
       0,
-      tower.p.z + tower.side.z * 34,
+      tower.p.z + tower.side.z * -34,
     ];
     const park = framesAt(curve, 0.94);
     const assembly = framesAt(curve, 0.89);
@@ -194,6 +194,7 @@ export function World() {
       bridges,
       start,
       end,
+      tower,
       towerPos,
     };
   }, []);
@@ -271,18 +272,18 @@ export function World() {
       ))}
 
       <YeouinaruPark
-        position={[built.park.p.x + built.park.side.x * 12, 0, built.park.p.z + built.park.side.z * 12]}
+        position={[built.park.p.x + built.park.side.x * -12, 0, built.park.p.z + built.park.side.z * -12]}
         yaw={built.park.yaw}
       />
       <NationalAssembly
         position={[
-          built.assembly.p.x + built.assembly.side.x * 38,
+          built.assembly.p.x + built.assembly.side.x * -38,
           0,
-          built.assembly.p.z + built.assembly.side.z * 38,
+          built.assembly.p.z + built.assembly.side.z * -38,
         ]}
         yaw={built.assembly.yaw}
       />
-      <Tower63 position={built.towerPos} />
+      <Tower63 position={built.towerPos} yaw={built.tower.yaw} />
 
       <mesh position={[built.start.p.x, 0.06, built.start.p.z]} rotation={[0, built.start.yaw, 0]}>
         <boxGeometry args={[3.6, 0.08, 0.4]} />

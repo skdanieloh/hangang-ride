@@ -305,6 +305,10 @@ button {
   grid-column: span 2;
 }
 
+.controls-right {
+  display: contents;
+}
+
 .ctrl.drift {
   align-self: end;
   width: 88px;
@@ -312,6 +316,49 @@ button {
   border-radius: 99px;
   font-size: 13px;
   letter-spacing: -0.02em;
+}
+
+.controls.is-landscape .controls-right {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.controls.is-landscape .controls-right .pad {
+  order: 1;
+}
+
+.controls.is-landscape .ctrl.drift {
+  order: 2;
+  width: 76px;
+  height: 76px;
+  font-size: 12px;
+}
+
+@media (orientation: landscape) {
+  .hud-bottom {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .controls-right {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .controls-right .pad {
+    order: 1;
+  }
+
+  .ctrl.drift {
+    order: 2;
+    width: 76px;
+    height: 76px;
+    font-size: 12px;
+  }
 }
 
 .ctrl.active {

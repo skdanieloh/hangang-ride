@@ -9,7 +9,7 @@ export function HomeScreen() {
         <small>Mobile 3D Ride</small>
         <h1>한강라이드</h1>
         <p>걸포동에서 한강 남단을 따라 여의나루역까지. 로드·픽시·따릉이.</p>
-        <p>아이폰: 홈 화면 아이콘이 404면 지운 뒤, 아래 주소에서 다시 공유 → 홈 화면에 추가 하세요.</p>
+        <p>아이폰 404가 나오면 그 아이콘을 지운 뒤, Safari에서 https://skdanieloh.github.io/hangang-ride/ 를 열고 공유 → 홈 화면에 추가 하세요.</p>
       </div>
       <div className="field">
         <label>닉네임</label>

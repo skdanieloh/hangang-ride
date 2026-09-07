@@ -56,18 +56,51 @@ export function waterTexture() {
 
 export function goldGlassTexture() {
   return canvasTex(256, 512, (ctx) => {
-    ctx.fillStyle = "#c9a24a";
+    const g = ctx.createLinearGradient(0, 0, 180, 512);
+    g.addColorStop(0, "#f3d48a");
+    g.addColorStop(0.22, "#e0b45a");
+    g.addColorStop(0.55, "#c99238");
+    g.addColorStop(0.82, "#d4a44a");
+    g.addColorStop(1, "#f0c56e");
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, 256, 512);
-    ctx.fillStyle = "rgba(255,230,150,0.28)";
-    for (let y = 8; y < 512; y += 18) {
-      for (let x = 6; x < 256; x += 16) {
-        ctx.fillRect(x, y, 12, 14);
+    for (let y = 3; y < 512; y += 8) {
+      for (let x = 2; x < 256; x += 7) {
+        ctx.fillStyle = (x + y) % 14 < 7 ? "rgba(255, 228, 160, 0.32)" : "rgba(120, 78, 18, 0.18)";
+        ctx.fillRect(x, y, 5.2, 6.2);
       }
     }
-    ctx.fillStyle = "rgba(80,60,20,0.25)";
-    for (let y = 6; y < 512; y += 18) ctx.fillRect(0, y, 256, 1);
-    for (let x = 4; x < 256; x += 16) ctx.fillRect(x, 0, 1, 512);
+    ctx.fillStyle = "rgba(70, 48, 12, 0.38)";
+    for (let y = 2; y < 512; y += 8) ctx.fillRect(0, y, 256, 0.8);
+    for (let x = 1; x < 256; x += 7) ctx.fillRect(x, 0, 0.8, 512);
   });
+}
+
+export function hanwhaLogoTexture() {
+  const tex = canvasTex(512, 160, (ctx) => {
+    ctx.clearRect(0, 0, 512, 160);
+    ctx.fillStyle = "#f47b20";
+    const cx = 72;
+    const cy = 80;
+    (
+      [
+        [0, -18],
+        [-20, 14],
+        [20, 14],
+      ] as const
+    ).forEach(([x, y]) => {
+      ctx.beginPath();
+      ctx.arc(cx + x, cy + y, 22, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.fillStyle = "#1c1c1c";
+    ctx.font = "bold 70px sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Hanwha", 128, 84);
+  });
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  return tex;
 }
 
 export function officeTexture() {

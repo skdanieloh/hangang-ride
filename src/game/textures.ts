@@ -55,24 +55,27 @@ export function waterTexture() {
 }
 
 export function goldGlassTexture() {
-  return canvasTex(256, 512, (ctx) => {
-    const g = ctx.createLinearGradient(0, 0, 180, 512);
-    g.addColorStop(0, "#f3d48a");
-    g.addColorStop(0.22, "#e0b45a");
-    g.addColorStop(0.55, "#c99238");
-    g.addColorStop(0.82, "#d4a44a");
-    g.addColorStop(1, "#f0c56e");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 256, 512);
-    for (let y = 3; y < 512; y += 8) {
-      for (let x = 2; x < 256; x += 7) {
-        ctx.fillStyle = (x + y) % 14 < 7 ? "rgba(255, 228, 160, 0.32)" : "rgba(120, 78, 18, 0.18)";
-        ctx.fillRect(x, y, 5.2, 6.2);
+  return canvasTex(256, 1024, (ctx) => {
+    const sky = ctx.createLinearGradient(0, 0, 0, 1024);
+    sky.addColorStop(0, "#f6d992");
+    sky.addColorStop(0.18, "#e8bc5c");
+    sky.addColorStop(0.45, "#c99236");
+    sky.addColorStop(0.72, "#d4a44a");
+    sky.addColorStop(1, "#f0c66c");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 256, 1024);
+    for (let y = 6; y < 1018; y += 16) {
+      for (let x = 4; x < 252; x += 10) {
+        const lit = (x * 3 + y * 7) % 11 > 3;
+        ctx.fillStyle = lit ? "rgba(28, 36, 48, 0.55)" : "rgba(18, 22, 30, 0.72)";
+        ctx.fillRect(x, y, 7.2, 12);
+        ctx.fillStyle = "rgba(255, 230, 170, 0.16)";
+        ctx.fillRect(x, y, 7.2, 2);
       }
     }
-    ctx.fillStyle = "rgba(70, 48, 12, 0.38)";
-    for (let y = 2; y < 512; y += 8) ctx.fillRect(0, y, 256, 0.8);
-    for (let x = 1; x < 256; x += 7) ctx.fillRect(x, 0, 0.8, 512);
+    ctx.fillStyle = "rgba(90, 62, 18, 0.45)";
+    for (let y = 4; y < 1024; y += 16) ctx.fillRect(0, y, 256, 1.2);
+    for (let x = 3; x < 256; x += 10) ctx.fillRect(x, 0, 1, 1024);
   });
 }
 

@@ -128,20 +128,20 @@ function AeroSeatTube({ color }: { color: string }) {
     const wy = 0.33;
     const r = 0.356;
     const shape = new THREE.Shape();
-    shape.moveTo(0.075, 0.255);
-    shape.lineTo(-0.09, 0.828);
-    shape.lineTo(-0.23, 0.828);
-    shape.lineTo(-0.255, 0.76);
+    shape.moveTo(0.055, 0.255);
+    shape.lineTo(-0.1, 0.828);
+    shape.lineTo(-0.185, 0.828);
+    shape.lineTo(-0.21, 0.76);
     const aTop = 1.18;
     const aBot = 0.05;
     for (let i = 0; i <= 18; i++) {
       const a = aTop - (i / 18) * (aTop - aBot);
       shape.lineTo(wx + r * Math.cos(a), wy + r * Math.sin(a));
     }
-    shape.lineTo(0.02, 0.255);
+    shape.lineTo(0.01, 0.255);
     shape.closePath();
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.044, bevelEnabled: false, curveSegments: 8 });
-    geo.translate(0, 0, -0.022);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.028, bevelEnabled: false, curveSegments: 8 });
+    geo.translate(0, 0, -0.014);
     geo.computeVertexNormals();
     return geo;
   }, []);
@@ -334,8 +334,8 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
     <group>
       <Wheel position={[-0.5, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={20} brand="VELOCIDAD" motion={motion} />
       <Wheel position={[0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={16} brand="VELOCIDAD" motion={motion} />
-      <Bar from={[-0.18, 0.81, 0]} to={[0.36, 0.79, 0]} color={silver} r={0.024} />
-      <Bar from={[0.36, 0.79, 0]} to={[0.08, 0.34, 0]} color={silver} r={0.03} />
+      <Bar from={[-0.18, 0.81, 0]} to={[0.36, 0.79, 0]} color={silver} r={0.015} />
+      <Bar from={[0.36, 0.79, 0]} to={[0.08, 0.34, 0]} color={silver} r={0.017} />
       <AeroSeatTube color={silver} />
       {([-0.038, 0.038] as const).map((z) => (
         <group key={z}>
@@ -431,9 +431,9 @@ function RoadBike({
     <group>
       <Wheel position={[-0.54, 0.33, 0]} tire={tire} deep={aero} rim={aero ? "#111" : "#2a2a2a"} motion={motion} />
       <Wheel position={[0.54, 0.33, 0]} tire={tire} deep={aero} rim={aero ? "#111" : "#2a2a2a"} motion={motion} />
-      <Bar from={[-0.2, 0.82, 0]} to={[0.38, topY, 0]} color={color} r={0.02} />
-      <Bar from={[-0.2, 0.82, 0]} to={[0.07, 0.29, 0]} color={color} r={0.02} />
-      <Bar from={[0.38, topY, 0]} to={[0.07, 0.29, 0]} color={color} r={0.02} />
+      <Bar from={[-0.2, 0.82, 0]} to={[0.38, topY, 0]} color={color} r={0.014} />
+      <Bar from={[-0.2, 0.82, 0]} to={[0.07, 0.29, 0]} color={color} r={0.014} />
+      <Bar from={[0.38, topY, 0]} to={[0.07, 0.29, 0]} color={color} r={0.014} />
       {([-0.038, 0.038] as const).map((z) => (
         <group key={z}>
           <Bar from={[-0.2, 0.82, z]} to={[-0.54, 0.33, z]} color={color} r={0.013} />
@@ -503,9 +503,9 @@ function Ttareungyi({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
     <group>
       <Wheel position={[-0.48, 0.33, 0]} tire={0.018} rim="#b6e34a" spokes={16} motion={motion} />
       <Wheel position={[0.5, 0.33, 0]} tire={0.018} rim="#b6e34a" spokes={16} motion={motion} />
-      <Bar from={[0.42, 0.8, 0]} to={[0.15, 0.38, 0]} color="#f3f5f2" r={0.022} />
-      <Bar from={[0.15, 0.38, 0]} to={[-0.15, 0.35, 0]} color="#f3f5f2" r={0.024} />
-      <Bar from={[-0.15, 0.35, 0]} to={[-0.24, 0.82, 0]} color="#f3f5f2" r={0.02} />
+      <Bar from={[0.42, 0.8, 0]} to={[0.15, 0.38, 0]} color="#f3f5f2" r={0.015} />
+      <Bar from={[0.15, 0.38, 0]} to={[-0.15, 0.35, 0]} color="#f3f5f2" r={0.016} />
+      <Bar from={[-0.15, 0.35, 0]} to={[-0.24, 0.82, 0]} color="#f3f5f2" r={0.014} />
       {([-0.034, 0.034] as const).map((z) => (
         <group key={z}>
           <Bar from={[-0.15, 0.35, z]} to={[-0.48, 0.33, z]} color="#f3f5f2" r={0.012} />

@@ -106,82 +106,111 @@ export function Tower63({
 }) {
   const glass = useMemo(() => {
     const tex = goldGlassTexture();
-    tex.repeat.set(6, 18);
+    tex.repeat.set(8, 24);
     return tex;
   }, []);
   const logo = useMemo(() => hanwhaLogoTexture(), []);
   const body = useMemo(() => {
-    const w = 9.2;
-    const d = 20;
-    const bulge = 3.2;
+    const w = 8.6;
+    const d = 19.4;
+    const bulge = 3.6;
     const shape = new THREE.Shape();
-    shape.moveTo(-w + 2.4, -d);
-    shape.lineTo(w - 2.4, -d);
-    shape.quadraticCurveTo(w, -d, w, -d + 3.2);
-    shape.quadraticCurveTo(w + bulge, 0, w, d - 3.2);
-    shape.quadraticCurveTo(w, d, w - 2.4, d);
-    shape.lineTo(-w + 2.4, d);
-    shape.quadraticCurveTo(-w, d, -w, d - 3.2);
-    shape.quadraticCurveTo(-w - bulge, 0, -w, -d + 3.2);
-    shape.quadraticCurveTo(-w, -d, -w + 2.4, -d);
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: 108, bevelEnabled: false, curveSegments: 18 });
+    shape.moveTo(-w + 2.2, -d);
+    shape.lineTo(w - 2.2, -d);
+    shape.quadraticCurveTo(w, -d, w, -d + 3);
+    shape.quadraticCurveTo(w + bulge, 0, w, d - 3);
+    shape.quadraticCurveTo(w, d, w - 2.2, d);
+    shape.lineTo(-w + 2.2, d);
+    shape.quadraticCurveTo(-w, d, -w, d - 3);
+    shape.quadraticCurveTo(-w - bulge, 0, -w, -d + 3);
+    shape.quadraticCurveTo(-w, -d, -w + 2.2, -d);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 118, bevelEnabled: false, curveSegments: 24 });
     geo.rotateX(-Math.PI / 2);
     geo.computeVertexNormals();
     return geo;
   }, []);
+  const dark = "#1b2734";
 
   return (
     <group position={position} rotation={[0, yaw, 0]}>
-      <mesh geometry={body} position={[0, 0, 0]} castShadow>
-        <meshStandardMaterial
-          map={glass}
-          color="#e8c36a"
-          metalness={0.82}
-          roughness={0.16}
-          envMapIntensity={1.4}
-        />
+      <mesh position={[0, 0.04, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[28, 24]} />
+        <meshStandardMaterial color="#c9c4b8" roughness={0.92} />
       </mesh>
-      {[-1, 1].map((side) =>
-        [-17.6, 17.6].map((z) => (
-          <mesh key={`groove-${side}-${z}`} position={[side * 11.4, 54, z]}>
-            <boxGeometry args={[0.7, 108, 1.6]} />
-            <meshStandardMaterial color="#1a2430" metalness={0.35} roughness={0.45} />
-          </mesh>
-        )),
-      )}
-      {[28, 80].map((y) =>
-        [-1, 1].map((side) => (
-          <mesh key={`band-${y}-${side}`} position={[side * 12.15, y, 0]}>
-            <boxGeometry args={[0.45, 1.2, 40]} />
-            <meshStandardMaterial color="#243040" metalness={0.4} roughness={0.4} />
-          </mesh>
-        )),
-      )}
-      <mesh position={[0, 109.2, 0]}>
-        <boxGeometry args={[16, 2.4, 32]} />
-        <meshStandardMaterial color="#d7b056" metalness={0.7} roughness={0.28} />
+      <mesh position={[0, 3.4, 0]}>
+        <boxGeometry args={[24, 6.8, 46]} />
+        <meshStandardMaterial color="#d7b056" metalness={0.55} roughness={0.32} />
       </mesh>
-      <mesh position={[-4.5, 111.6, 6]}>
-        <boxGeometry args={[6, 3.2, 8]} />
-        <meshStandardMaterial color="#9aa0a6" metalness={0.45} roughness={0.4} />
-      </mesh>
-      <mesh position={[5, 111.2, -7]}>
-        <boxGeometry args={[5, 2.6, 6]} />
-        <meshStandardMaterial color="#8b9198" metalness={0.4} roughness={0.42} />
-      </mesh>
-      <mesh position={[-7.2, 122, 8]}>
-        <cylinderGeometry args={[0.28, 0.38, 22, 8]} />
-        <meshStandardMaterial color="#d8dde2" metalness={0.55} roughness={0.3} />
-      </mesh>
-      {[0, 1, 2, 3, 4].map((i) => (
-        <mesh key={`stripe-${i}`} position={[-7.2, 113.5 + i * 3.6, 8]}>
-          <cylinderGeometry args={[0.3, 0.3, 1.7, 8]} />
-          <meshStandardMaterial color={i % 2 === 0 ? "#d92b2b" : "#f4f4f4"} />
+      {[-8, 0, 8].map((x) => (
+        <mesh key={`pod-${x}`} position={[x, 3.2, 23.2]}>
+          <boxGeometry args={[5.2, 5.2, 0.35]} />
+          <meshStandardMaterial color="#1a2430" metalness={0.3} />
         </mesh>
       ))}
-      <mesh position={[11.6, 98, -6]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[14, 3.6]} />
+      <mesh geometry={body} position={[0, 6.8, 0]} castShadow>
+        <meshStandardMaterial map={glass} color="#e6be62" metalness={0.88} roughness={0.12} />
+      </mesh>
+      {[-1, 1].map((side) => (
+        <group key={`face-${side}`}>
+          <mesh position={[side * 12.05, 65, 0]}>
+            <boxGeometry args={[0.55, 118, 2.2]} />
+            <meshStandardMaterial color={dark} metalness={0.4} roughness={0.38} />
+          </mesh>
+          {[-18.4, 18.4].map((z) => (
+            <mesh key={z} position={[side * 10.6, 65, z]}>
+              <boxGeometry args={[0.7, 118, 1.5]} />
+              <meshStandardMaterial color={dark} metalness={0.35} roughness={0.4} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      {[22, 48, 74, 98].map((y) =>
+        [-1, 1].map((side) => (
+          <mesh key={`mech-${y}-${side}`} position={[side * 12.25, y, 0]}>
+            <boxGeometry args={[0.5, 1.6, 41]} />
+            <meshStandardMaterial color="#243040" metalness={0.45} roughness={0.35} />
+          </mesh>
+        )),
+      )}
+      <mesh position={[0, 108, 0]}>
+        <boxGeometry args={[18.5, 3.2, 36]} />
+        <meshStandardMaterial color="#2a3544" metalness={0.5} roughness={0.32} />
+      </mesh>
+      <mesh position={[0, 111.4, 0]}>
+        <boxGeometry args={[16.5, 2.2, 32]} />
+        <meshStandardMaterial color="#d7b056" metalness={0.72} roughness={0.22} />
+      </mesh>
+      {[-10, -4, 3, 9].map((z, i) => (
+        <mesh key={`hvac-${z}`} position={[-3 + (i % 2) * 6, 114.2, z]}>
+          <boxGeometry args={[4.2, 2.4, 4.8]} />
+          <meshStandardMaterial color="#8e949b" metalness={0.5} roughness={0.38} />
+        </mesh>
+      ))}
+      <mesh position={[-6.8, 116.6, 9]}>
+        <boxGeometry args={[1.1, 5.2, 1.1]} />
+        <meshStandardMaterial color="#b8bec4" metalness={0.55} />
+      </mesh>
+      <mesh position={[-7.4, 128, 11.2]}>
+        <cylinderGeometry args={[0.18, 0.32, 24, 8]} />
+        <meshStandardMaterial color="#d5dbe0" metalness={0.6} roughness={0.28} />
+      </mesh>
+      {Array.from({ length: 7 }).map((_, i) => (
+        <mesh key={`ant-${i}`} position={[-7.4, 118 + i * 2.8, 11.2]}>
+          <boxGeometry args={[0.55, 1.5, 0.55]} />
+          <meshStandardMaterial color={i % 2 === 0 ? "#d92b2b" : "#f3f3f3"} />
+        </mesh>
+      ))}
+      <mesh position={[-7.4, 139.2, 11.2]}>
+        <sphereGeometry args={[0.28, 8, 8]} />
+        <meshStandardMaterial color="#c0392b" />
+      </mesh>
+      <mesh position={[12.4, 102.5, -5]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[16, 4.2]} />
         <meshBasicMaterial map={logo} transparent depthWrite={false} />
+      </mesh>
+      <mesh position={[38, 28, -18]}>
+        <boxGeometry args={[16, 56, 16]} />
+        <meshStandardMaterial color="#8a929c" roughness={0.55} metalness={0.12} />
       </mesh>
     </group>
   );

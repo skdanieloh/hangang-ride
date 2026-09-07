@@ -77,9 +77,10 @@ function LocalBike({
     const input = controls.current;
     const max = bike.maxKmh / 3.6;
     const accel = (bike.accel / bike.massFeel) * 1.35;
+    const coast = bike.id === "ttareungyi" ? 0.94 : 0.978;
     if (input.forward) speedRef.current += accel * dt;
     else if (input.back) speedRef.current -= accel * 0.7 * dt;
-    else speedRef.current *= Math.pow(0.18, dt);
+    else speedRef.current *= Math.pow(coast, dt);
 
     speedRef.current = THREE.MathUtils.clamp(speedRef.current, -max * 0.28, max);
     const steer = ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * bike.turn;

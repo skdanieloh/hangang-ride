@@ -43,7 +43,7 @@ export const BIKES: BikeSpec[] = [
     name: "따릉이",
     kind: "따릉이",
     maxKmh: 36,
-    accel: 2.5,
+    accel: 6.2,
     brake: 16,
     turn: 1.15,
     massFeel: 1.35,

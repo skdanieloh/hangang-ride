@@ -136,6 +136,8 @@ function LocalBike({
     motion.current.speed = speedRef.current * feel;
     motion.current.lean = leanRef.current;
     motion.current.drifting = drifting;
+    motion.current.steer = headingRef.current * 4.2;
+    motion.current.pedaling = input.forward && speedRef.current > 0.15;
     if (group.current) {
       group.current.position.copy(tmp);
       group.current.rotation.set(0, yaw, 0);

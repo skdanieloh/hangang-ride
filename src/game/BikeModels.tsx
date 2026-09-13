@@ -126,27 +126,26 @@ function Decal({
   );
 }
 
-/** 안장 클램프는 그대로, 컷아웃은 뒷바퀴 앞쪽만 얕게 판다. */
+/** 위는 안장까지 직각, 뒤는 뒷바퀴를 향하는 곡률만. */
 function AeroSeatTube({ color }: { color: string }) {
   const geometry = useMemo(() => {
     const wx = -0.5;
     const wy = 0.33;
-    const r = 0.348;
+    const r = 0.352;
     const shape = new THREE.Shape();
-    shape.moveTo(0.055, 0.255);
-    shape.lineTo(-0.1, 0.828);
-    shape.lineTo(-0.185, 0.828);
-    shape.lineTo(-0.21, 0.76);
-    const aTop = 0.88;
-    const aBot = 0.32;
-    for (let i = 0; i <= 10; i++) {
-      const a = aTop - (i / 10) * (aTop - aBot);
+    shape.moveTo(0.05, 0.27);
+    shape.lineTo(-0.04, 0.828);
+    shape.lineTo(-0.205, 0.828);
+    shape.lineTo(-0.205, 0.79);
+    const aTop = 1.2;
+    const aBot = 0.16;
+    for (let i = 0; i <= 16; i++) {
+      const a = aTop - (i / 16) * (aTop - aBot);
       shape.lineTo(wx + r * Math.cos(a), wy + r * Math.sin(a));
     }
-    shape.lineTo(0.02, 0.255);
     shape.closePath();
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.028, bevelEnabled: false, curveSegments: 8 });
-    geo.translate(0, 0, -0.014);
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.034, bevelEnabled: false, curveSegments: 10 });
+    geo.translate(0, 0, -0.017);
     geo.computeVertexNormals();
     return geo;
   }, []);
@@ -220,12 +219,12 @@ function DropBars({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
         <group key={side}>
           <Bar from={[0.05, 0.01, 0.19 * side]} to={[0.08, -0.09, 0.19 * side]} r={0.01} color="#1a1a1a" />
           <Bar from={[0.08, -0.09, 0.19 * side]} to={[-0.01, -0.15, 0.19 * side]} r={0.01} color="#1a1a1a" />
-          <mesh position={[0.11, 0.03, 0.19 * side]} rotation={[0, 0, -0.7]}>
-            <capsuleGeometry args={[0.013, 0.07, 4, 8]} />
+          <mesh position={[0.1, 0.018, 0.19 * side]} rotation={[0, 0, -0.48]}>
+            <capsuleGeometry args={[0.012, 0.038, 4, 8]} />
             <meshStandardMaterial color="#111" />
           </mesh>
-          <mesh position={[0.07, -0.015, 0.185 * side]} rotation={[0.15 * side, 0, 0.95]}>
-            <boxGeometry args={[0.009, 0.062, 0.014]} />
+          <mesh position={[0.102, -0.022, 0.19 * side]}>
+            <boxGeometry args={[0.01, 0.034, 0.012]} />
             <meshStandardMaterial color="#1a1a1a" metalness={0.4} />
           </mesh>
         </group>
@@ -739,16 +738,12 @@ function Rider({ upright }: { upright: boolean }) {
       ))}
       {([-1, 1] as const).map((side) => (
         <group key={`arm${side}`}>
-          <mesh position={[0.1, 0.3, 0.08 * side]} rotation={[0.2 * side, 0, -1.12]}>
-            <capsuleGeometry args={[0.03, 0.15, 5, 8]} />
+          <mesh position={[0.12, 0.28, 0.07 * side]} rotation={[0.08 * side, 0, -1.05]}>
+            <capsuleGeometry args={[0.026, 0.2, 5, 8]} />
             <meshStandardMaterial color={jersey} />
           </mesh>
-          <mesh position={[0.26, 0.22, 0.15 * side]} rotation={[0.12 * side, 0, -0.38]}>
-            <capsuleGeometry args={[0.024, 0.13, 4, 8]} />
-            <meshStandardMaterial color={skin} roughness={0.5} />
-          </mesh>
-          <mesh position={[0.36, 0.18, 0.17 * side]}>
-            <sphereGeometry args={[0.022, 8, 6]} />
+          <mesh position={[0.3, 0.2, 0.12 * side]}>
+            <sphereGeometry args={[0.02, 8, 6]} />
             <meshStandardMaterial color="#222" />
           </mesh>
         </group>

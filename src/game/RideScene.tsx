@@ -66,6 +66,7 @@ function LocalBike({
   const headingRef = useRef(0);
   const speedRef = useRef(0);
   const leanRef = useRef(0);
+  const barSteerRef = useRef(0);
   const finishedRef = useRef(false);
   const start = useRef(performance.now());
   const lastEmit = useRef(0);
@@ -136,7 +137,9 @@ function LocalBike({
     motion.current.speed = speedRef.current * feel;
     motion.current.lean = leanRef.current;
     motion.current.drifting = drifting;
-    motion.current.steer = headingRef.current * 4.2;
+    const wantBar = ((input.left ? 1 : 0) - (input.right ? 1 : 0)) * 0.2;
+    barSteerRef.current = THREE.MathUtils.damp(barSteerRef.current, wantBar, 14, step);
+    motion.current.steer = THREE.MathUtils.clamp(barSteerRef.current, -0.22, 0.22);
     motion.current.pedaling = input.forward && speedRef.current > 0.15;
     if (group.current) {
       group.current.position.copy(tmp);

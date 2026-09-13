@@ -13,6 +13,25 @@ function canvasTex(w: number, h: number, draw: (ctx: CanvasRenderingContext2D) =
   return tex;
 }
 
+export function chainTexture() {
+  const tex = canvasTex(64, 16, (ctx) => {
+    ctx.fillStyle = "#2c2e31";
+    ctx.fillRect(0, 0, 64, 16);
+    ctx.fillStyle = "#7b8086";
+    ctx.fillRect(1, 3, 20, 10);
+    ctx.fillStyle = "#c5c8cc";
+    ctx.fillRect(22, 4, 9, 8);
+    ctx.fillStyle = "#7b8086";
+    ctx.fillRect(33, 3, 20, 10);
+    ctx.fillStyle = "#c5c8cc";
+    ctx.fillRect(54, 4, 8, 8);
+  });
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(26, 1);
+  return tex;
+}
+
 export function asphaltTexture() {
   return canvasTex(256, 256, (ctx) => {
     ctx.fillStyle = "#4a4d52";

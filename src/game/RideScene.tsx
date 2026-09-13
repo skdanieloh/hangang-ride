@@ -73,16 +73,18 @@ function LocalBike({
   const group = useRef<THREE.Group>(null);
   const camTarget = useRef(new THREE.Vector3());
   const motion = useRef<BikeMotion>({ speed: 0, lean: 0 });
-  const feel = 1.55;
+  const feel = 1.18;
 
   useFrame((state, dt) => {
     const input = controls.current;
+    const step = Math.min(dt, 0.04);
     const max = bike.maxKmh / 3.6;
-    const accel = (bike.accel / bike.massFeel) * 1.35;
+    const accel = bike.accel / bike.massFeel;
     const coast = bike.id === "ttareungyi" ? 0.94 : 0.978;
-    if (input.forward) speedRef.current += accel * dt;
-    else if (input.back) speedRef.current -= accel * 0.7 * dt;
-    else speedRef.current *= Math.pow(coast, dt);
+    const pull = 1 - Math.min(0.78, (Math.abs(speedRef.current) / Math.max(max, 0.01)) * 0.74);
+    if (input.forward) speedRef.current += accel * pull * step;
+    else if (input.back) speedRef.current -= accel * 0.7 * step;
+    else speedRef.current *= Math.pow(coast, step);
 
     speedRef.current = THREE.MathUtils.clamp(speedRef.current, -max * 0.28, max);
     const steer = ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * bike.turn;
@@ -97,21 +99,21 @@ function LocalBike({
       headingRef.current,
       steer * 0.22 + oversteer,
       drifting ? 11 : 6,
-      dt,
+      step,
     );
     const slide = drifting
       ? steer * (1.85 + Math.abs(speedRef.current) * 0.16)
       : steer * (0.9 + Math.abs(speedRef.current) * 0.08);
-    offsetRef.current = THREE.MathUtils.clamp(offsetRef.current + slide * dt, -1.85, 1.85);
-    if (drifting) speedRef.current *= Math.pow(0.48, dt);
+    offsetRef.current = THREE.MathUtils.clamp(offsetRef.current + slide * step, -1.85, 1.85);
+    if (drifting) speedRef.current *= Math.pow(0.48, step);
     leanRef.current = THREE.MathUtils.damp(
       leanRef.current,
       steer * (drifting ? 0.42 : 0.18),
       drifting ? 14 : 8,
-      dt,
+      step,
     );
 
-    tRef.current += (speedRef.current * feel * dt) / pathLen;
+    tRef.current += (speedRef.current * feel * step) / pathLen;
     if (tRef.current < 0.002) {
       tRef.current = 0.002;
       if (speedRef.current < 0) speedRef.current = 0;

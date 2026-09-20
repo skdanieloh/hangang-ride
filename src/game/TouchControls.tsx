@@ -5,6 +5,7 @@ const BUTTONS: { key: keyof ControlState; label: string; extra: string }[] = [
   { key: "left", label: "←", extra: "좌" },
   { key: "right", label: "→", extra: "우" },
   { key: "forward", label: "↑", extra: "앞" },
+  { key: "brake", label: "●", extra: "브레이크" },
 ];
 
 export function TouchControls({
@@ -26,7 +27,7 @@ export function TouchControls({
       {BUTTONS.map((btn) => (
         <button
           key={btn.key}
-          className={`ctrl ${active[btn.key] ? "active" : ""}`}
+          className={`ctrl${btn.key === "brake" ? " brake" : ""} ${active[btn.key] ? "active" : ""}`}
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
             press(btn.key, true);

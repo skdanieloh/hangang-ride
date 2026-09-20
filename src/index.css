@@ -396,9 +396,20 @@ button {
   letter-spacing: -0.02em;
 }
 
+.ctrl.brake {
+  width: 84px;
+  font-size: 13px;
+  letter-spacing: -0.03em;
+}
+
 .ctrl.active {
   background: var(--mint);
   color: #072016;
+}
+
+.ctrl.brake.active {
+  background: #e45b4a;
+  color: #fff7f5;
 }
 
 .finish {

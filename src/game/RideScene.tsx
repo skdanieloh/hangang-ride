@@ -222,6 +222,7 @@ function LocalBike({
     engaged: false,
     cruised: false,
   });
+  const brakeHold = useRef(0);
   const feel = 1.18;
 
   useFrame((state, dt) => {
@@ -231,16 +232,24 @@ function LocalBike({
     const accel = bike.accel / bike.massFeel;
     const city = bike.id === "ttareungyi";
     const roll = city ? 0.955 : 0.983;
-    const wantGo = input.forward && !input.back && !finishedRef.current;
+    const braking = input.brake && !finishedRef.current;
+    const wantGo = input.forward && !braking && !finishedRef.current;
     speedRef.current *= Math.pow(roll, step);
-    if (input.back) speedRef.current -= accel * 0.7 * step;
+    brakeHold.current = THREE.MathUtils.damp(brakeHold.current, braking ? 1 : 0, braking ? 12 : 7, step);
+    if (brakeHold.current > 0.02) {
+      const peak = (bike.brake / bike.massFeel) * 0.26;
+      const bite = 1 + Math.min(0.22, Math.abs(speedRef.current) / Math.max(max, 0.01) * 0.22);
+      const decel = peak * brakeHold.current * bite;
+      if (Math.abs(speedRef.current) <= decel * step) speedRef.current = 0;
+      else speedRef.current -= Math.sign(speedRef.current) * decel * step;
+    }
     const drive = tickPedalFeel(pedal.current, wantGo, Math.abs(speedRef.current), max, city, step);
-    if (drive.power > 0) {
+    if (drive.power > 0 && !braking) {
       const pull = 1 - Math.min(0.72, (Math.abs(speedRef.current) / Math.max(max, 0.01)) * 0.68);
       speedRef.current += accel * pull * drive.power * step;
     }
 
-    speedRef.current = THREE.MathUtils.clamp(speedRef.current, -max * 0.28, max);
+    speedRef.current = THREE.MathUtils.clamp(speedRef.current, 0, max);
     const steer = ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * bike.turn;
     const kmhAbs = Math.abs(speedRef.current) * 3.6;
     const drifting =

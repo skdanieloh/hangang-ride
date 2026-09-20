@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 export type ControlState = {
   forward: boolean;
-  back: boolean;
+  brake: boolean;
   left: boolean;
   right: boolean;
   drift: boolean;
@@ -11,7 +11,7 @@ export type ControlState = {
 export function useControls() {
   const controls = useRef<ControlState>({
     forward: false,
-    back: false,
+    brake: false,
     left: false,
     right: false,
     drift: false,
@@ -20,11 +20,11 @@ export function useControls() {
   useEffect(() => {
     const map: Record<string, keyof ControlState> = {
       ArrowUp: "forward",
-      ArrowDown: "back",
+      ArrowDown: "brake",
       ArrowLeft: "left",
       ArrowRight: "right",
       KeyW: "forward",
-      KeyS: "back",
+      KeyS: "brake",
       KeyA: "left",
       KeyD: "right",
       ShiftLeft: "drift",

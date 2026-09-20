@@ -22,6 +22,78 @@ const CAM_HEIGHT = 0.6;
 
 type LookOrbit = { yaw: number; pitch: number; active: boolean };
 
+type PedalFeel = {
+  phase: "spin" | "coast" | "stomp";
+  cadence: number;
+  crank: number;
+  holdSpeed: number;
+  coastTime: number;
+  stompTime: number;
+  engaged: boolean;
+  cruised: boolean;
+};
+
+function tickPedalFeel(feel: PedalFeel, wantGo: boolean, speedAbs: number, maxSpeed: number, city: boolean, step: number) {
+  const ratio = speedAbs / Math.max(maxSpeed, 0.01);
+  const cruiseAt = city ? 0.62 : 0.7;
+  const dropTo = city ? 0.9 : 0.925;
+  const minCoast = city ? 1.15 : 1.7;
+  const spinCadence = THREE.MathUtils.lerp(city ? 9.4 : 12.6, city ? 7.8 : 9.8, THREE.MathUtils.clamp(ratio / cruiseAt, 0, 1));
+  const stompCadence = city ? 11.2 : 13.8;
+  let target = 0;
+  let power = 0;
+
+  if (ratio < 0.22) feel.cruised = false;
+
+  if (!wantGo) {
+    feel.phase = "coast";
+    feel.stompTime = 0;
+    feel.engaged = false;
+  } else if (!feel.cruised && ratio < cruiseAt) {
+    feel.phase = "spin";
+    feel.holdSpeed = speedAbs;
+    feel.coastTime = 0;
+    feel.stompTime = 0;
+    feel.engaged = true;
+    target = spinCadence;
+    power = city ? 1.05 : 1.12;
+  } else {
+    feel.cruised = true;
+    const fresh = !feel.engaged;
+    feel.engaged = true;
+    if (fresh) feel.holdSpeed = Math.max(feel.holdSpeed, speedAbs * 1.03);
+    const lostSpeed = feel.coastTime > minCoast && speedAbs < feel.holdSpeed * dropTo;
+    if (feel.phase === "stomp" || fresh || lostSpeed) {
+      if (feel.phase !== "stomp") feel.stompTime = 0;
+      feel.phase = "stomp";
+      feel.coastTime = 0;
+      feel.stompTime += step;
+      target = stompCadence;
+      power = speedAbs < feel.holdSpeed ? (city ? 0.72 : 0.64) : 0;
+      const recovered = speedAbs >= feel.holdSpeed * 0.985;
+      if (feel.stompTime > 0.65 && (recovered || feel.stompTime > 1.8)) {
+        feel.phase = "coast";
+        feel.holdSpeed = Math.max(feel.holdSpeed, speedAbs);
+        feel.stompTime = 0;
+        feel.coastTime = 0;
+        target = 0;
+        power = 0;
+      }
+    } else {
+      feel.phase = "coast";
+      feel.coastTime += step;
+      if (speedAbs > feel.holdSpeed) feel.holdSpeed = speedAbs;
+    }
+  }
+
+  const rising = target > feel.cadence + 0.2;
+  feel.cadence = THREE.MathUtils.damp(feel.cadence, target, rising ? 16 : 4.5, step);
+  if (feel.cadence < 0.18) feel.cadence = 0;
+  const pulse = feel.cadence > 0.4 ? 1 + 0.16 * Math.max(0, Math.sin(feel.crank * 2)) : 1;
+  feel.crank -= feel.cadence * pulse * step;
+  return { power, pedaling: feel.cadence > 0.45 };
+}
+
 function useLookOrbit(layer: MutableRefObject<HTMLDivElement | null>, look: MutableRefObject<LookOrbit>) {
   useEffect(() => {
     const root = layer.current;
@@ -140,6 +212,16 @@ function LocalBike({
   const group = useRef<THREE.Group>(null);
   const camTarget = useRef(new THREE.Vector3());
   const motion = useRef<BikeMotion>({ speed: 0, lean: 0 });
+  const pedal = useRef<PedalFeel>({
+    phase: "spin",
+    cadence: 0,
+    crank: 0,
+    holdSpeed: 0,
+    coastTime: 0,
+    stompTime: 0,
+    engaged: false,
+    cruised: false,
+  });
   const feel = 1.18;
 
   useFrame((state, dt) => {
@@ -147,11 +229,16 @@ function LocalBike({
     const step = Math.min(dt, 0.04);
     const max = bike.maxKmh / 3.6;
     const accel = bike.accel / bike.massFeel;
-    const coast = bike.id === "ttareungyi" ? 0.94 : 0.978;
-    const pull = 1 - Math.min(0.78, (Math.abs(speedRef.current) / Math.max(max, 0.01)) * 0.74);
-    if (input.forward) speedRef.current += accel * pull * step;
-    else if (input.back) speedRef.current -= accel * 0.7 * step;
-    else speedRef.current *= Math.pow(coast, step);
+    const city = bike.id === "ttareungyi";
+    const roll = city ? 0.955 : 0.983;
+    const wantGo = input.forward && !input.back && !finishedRef.current;
+    speedRef.current *= Math.pow(roll, step);
+    if (input.back) speedRef.current -= accel * 0.7 * step;
+    const drive = tickPedalFeel(pedal.current, wantGo, Math.abs(speedRef.current), max, city, step);
+    if (drive.power > 0) {
+      const pull = 1 - Math.min(0.72, (Math.abs(speedRef.current) / Math.max(max, 0.01)) * 0.68);
+      speedRef.current += accel * pull * drive.power * step;
+    }
 
     speedRef.current = THREE.MathUtils.clamp(speedRef.current, -max * 0.28, max);
     const steer = ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * bike.turn;
@@ -206,8 +293,9 @@ function LocalBike({
     const wantBar = ((input.left ? 1 : 0) - (input.right ? 1 : 0)) * 0.34;
     barSteerRef.current = THREE.MathUtils.damp(barSteerRef.current, wantBar, 14, step);
     motion.current.steer = THREE.MathUtils.clamp(barSteerRef.current, -0.36, 0.36);
-    motion.current.pedaling = Math.abs(speedRef.current) > 0.1;
-    motion.current.crank = (motion.current.crank ?? 0) - speedRef.current * 2.15 * step;
+    motion.current.pedaling = drive.pedaling;
+    motion.current.crank = pedal.current.crank;
+    motion.current.crankRate = pedal.current.cadence;
     if (group.current) {
       group.current.position.copy(tmp);
       group.current.rotation.set(0, yaw, 0);

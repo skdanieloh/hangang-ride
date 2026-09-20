@@ -11,6 +11,7 @@ export type BikeMotion = {
   steer?: number;
   pedaling?: boolean;
   crank?: number;
+  crankRate?: number;
 };
 
 type XYZ = [number, number, number];
@@ -444,7 +445,7 @@ function ChainLoop({
   }, [key, radius]);
   useFrame((_, dt) => {
     if (!motion) return;
-    tex.offset.x -= motion.current.speed * 0.35 * dt;
+    tex.offset.x -= (motion.current.crankRate ?? 0) * 0.055 * dt;
   });
   return (
     <mesh geometry={geo}>

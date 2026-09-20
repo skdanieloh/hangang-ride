@@ -48,22 +48,22 @@ export function RiverBridge({
         <boxGeometry args={[4, 9.3, 16]} />
         <meshStandardMaterial map={concrete} roughness={0.88} />
       </mesh>
-      {[20, 36, 52, 68, 84].map((x) => (
+      {[20, 36, 52, 68, 84, 100, 118, 136].map((x) => (
         <mesh key={x} position={[x, 4.65, 0]}>
           <boxGeometry args={[3.2, 9.3, 3.6]} />
           <meshStandardMaterial map={concrete} roughness={0.88} />
         </mesh>
       ))}
-      {[22, 46, 70].map((x) => (
+      {[22, 50, 78, 106, 134].map((x) => (
         <mesh key={`deck-${x}`} position={[x, 10.0, 0]}>
-          <boxGeometry args={[50, 1.4, 15]} />
+          <boxGeometry args={[56, 1.4, 16]} />
           <meshStandardMaterial color="#6c7076" roughness={0.7} />
         </mesh>
       ))}
-      {[-6.2, 6.2].map((z) =>
-        [22, 46, 70].map((x) => (
+      {[-6.8, 6.8].map((z) =>
+        [22, 50, 78, 106, 134].map((x) => (
           <mesh key={`rail-${x}-${z}`} position={[x, 10.9, z]}>
-            <boxGeometry args={[50, 0.5, 0.2]} />
+            <boxGeometry args={[56, 0.5, 0.2]} />
             <meshStandardMaterial color="#4a4e52" metalness={0.4} />
           </mesh>
         )),
@@ -393,14 +393,14 @@ export function NationalAssembly({ position, yaw }: { position: [number, number,
 export function YeouinaruPark({ position, yaw }: { position: [number, number, number]; yaw: number }) {
   return (
     <group position={position} rotation={[0, yaw, 0]}>
-      <mesh position={[0, 0.03, 10]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[42, 36]} />
+      <mesh position={[0, 0.03, 18]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[90, 72]} />
         <meshStandardMaterial color="#c6c3bb" roughness={0.95} />
       </mesh>
-      {[-8, 0, 8, 16].map((z) =>
-        [-10, 2, 14].map((x) => (
+      {[-16, -4, 8, 20, 32].map((z) =>
+        [-24, -8, 8, 24].map((x) => (
           <mesh key={`${x}-${z}`} position={[x, 0.06, z]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[5.2, 2.4]} />
+            <planeGeometry args={[8.2, 3.2]} />
             <meshStandardMaterial color="#b7c08a" roughness={1} />
           </mesh>
         )),

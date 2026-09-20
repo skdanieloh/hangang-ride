@@ -98,8 +98,8 @@ function LocalBike({
     const oversteer = drifting ? steer * 0.7 : 0;
     headingRef.current = THREE.MathUtils.damp(
       headingRef.current,
-      steer * 0.22 + oversteer,
-      drifting ? 11 : 6,
+      drifting ? steer * 0.22 + oversteer : 0,
+      drifting ? 11 : 8,
       step,
     );
     const slide = drifting
@@ -137,9 +137,9 @@ function LocalBike({
     motion.current.speed = speedRef.current * feel;
     motion.current.lean = leanRef.current;
     motion.current.drifting = drifting;
-    const wantBar = ((input.left ? 1 : 0) - (input.right ? 1 : 0)) * 0.2;
+    const wantBar = ((input.left ? 1 : 0) - (input.right ? 1 : 0)) * 0.34;
     barSteerRef.current = THREE.MathUtils.damp(barSteerRef.current, wantBar, 14, step);
-    motion.current.steer = THREE.MathUtils.clamp(barSteerRef.current, -0.22, 0.22);
+    motion.current.steer = THREE.MathUtils.clamp(barSteerRef.current, -0.36, 0.36);
     motion.current.pedaling = input.forward && speedRef.current > 0.15;
     if (group.current) {
       group.current.position.copy(tmp);

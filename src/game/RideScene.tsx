@@ -122,7 +122,7 @@ function LocalBike({
 }: {
   controls: MutableRefObject<ControlState>;
   look: MutableRefObject<LookOrbit>;
-  onHud: (data: { kmh: number; t: number; finished: boolean; elapsed: number }) => void;
+  onHud: (data: { kmh: number; t: number; finished: boolean; elapsed: number; bearing: number }) => void;
 }) {
   const bike = getBike(getState().bikeId);
   const curve = useMemo(() => createRouteCurve(), []);
@@ -242,9 +242,10 @@ function LocalBike({
 
     const kmh = kmhNow;
     const elapsed = (performance.now() - start.current) / 1000;
-    if (performance.now() - lastHud.current > 100 || finishedRef.current) {
+    const bearing = ((180 - (yaw * 180) / Math.PI) % 360 + 360) % 360;
+    if (performance.now() - lastHud.current > 50 || finishedRef.current) {
       lastHud.current = performance.now();
-      onHud({ kmh, t, finished: finishedRef.current, elapsed });
+      onHud({ kmh, t, finished: finishedRef.current, elapsed, bearing });
     }
 
     if (performance.now() - lastEmit.current > 80) {
@@ -374,11 +375,36 @@ function Remotes({ riders }: { riders: RemoteRider[] }) {
   );
 }
 
+function Compass({ bearing }: { bearing: number }) {
+  const dir =
+    bearing < 45 || bearing >= 315 ? "북" : bearing < 135 ? "동" : bearing < 225 ? "남" : "서";
+  return (
+    <div className="compass" role="img" aria-label={`나침반 ${dir}`}>
+      <div className="compass-needle" />
+      <div className="compass-rose" style={{ transform: `rotate(${-bearing}deg)` }}>
+        {(
+          [
+            ["n", "북"],
+            ["e", "동"],
+            ["s", "남"],
+            ["w", "서"],
+          ] as const
+        ).map(([slot, label]) => (
+          <span key={slot} className={`compass-lab ${slot}`} style={{ transform: `rotate(${bearing}deg)` }}>
+            {label}
+          </span>
+        ))}
+      </div>
+      <div className="compass-face">{dir}</div>
+    </div>
+  );
+}
+
 export function RideScene() {
   const controls = useControls();
   const lookLayer = useRef<HTMLDivElement>(null);
   const look = useRef<LookOrbit>({ yaw: 0, pitch: 0, active: false });
-  const [hud, setHud] = useState({ kmh: 0, t: 0, finished: false, elapsed: 0 });
+  const [hud, setHud] = useState({ kmh: 0, t: 0, finished: false, elapsed: 0, bearing: 0 });
   const [riders, setRiders] = useState<RemoteRider[]>(getState().riders);
   const landmark = nearestLandmark(hud.t);
   useLookOrbit(lookLayer, look);
@@ -404,9 +430,12 @@ export function RideScene() {
       <div className="look-drag" ref={lookLayer} />
       <div className="hud">
         <div className="hud-top">
-          <div className="chip">
-            <strong>{landmark.name}</strong>
-            <div>{getBike(getState().bikeId).name}</div>
+          <div className="hud-place">
+            <div className="chip">
+              <strong>{landmark.name}</strong>
+              <div>{getBike(getState().bikeId).name}</div>
+            </div>
+            <Compass bearing={hud.bearing} />
           </div>
           <div className="chip">
             <div className="speed">

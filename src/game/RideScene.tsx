@@ -15,6 +15,70 @@ import { useControls, type ControlState } from "./useControls";
 const tmp = new THREE.Vector3();
 const tan = new THREE.Vector3();
 const bin = new THREE.Vector3();
+const camDesired = new THREE.Vector3();
+const HALF_PI = Math.PI / 2;
+const LOOK_Y = 0.82;
+const CAM_HEIGHT = 0.6;
+
+type LookOrbit = { yaw: number; pitch: number; active: boolean };
+
+function useLookOrbit(layer: MutableRefObject<HTMLDivElement | null>, look: MutableRefObject<LookOrbit>) {
+  useEffect(() => {
+    const root = layer.current;
+    if (!root) return;
+    let pointerId: number | null = null;
+    let lastX = 0;
+    let lastY = 0;
+
+    const onDown = (e: PointerEvent) => {
+      if (pointerId !== null) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      pointerId = e.pointerId;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      look.current.active = true;
+      try {
+        root.setPointerCapture(e.pointerId);
+      } catch {
+        /* synthetic or already-released pointers */
+      }
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerId !== pointerId) return;
+      const span = Math.max(220, Math.min(window.innerWidth, window.innerHeight));
+      look.current.yaw = THREE.MathUtils.clamp(
+        look.current.yaw + ((e.clientX - lastX) / span) * Math.PI,
+        -HALF_PI,
+        HALF_PI,
+      );
+      look.current.pitch = THREE.MathUtils.clamp(
+        look.current.pitch - ((e.clientY - lastY) / span) * 1.4,
+        0,
+        1,
+      );
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerId !== pointerId) return;
+      pointerId = null;
+      look.current.active = false;
+    };
+
+    root.addEventListener("pointerdown", onDown);
+    root.addEventListener("pointermove", onMove);
+    root.addEventListener("pointerup", onUp);
+    root.addEventListener("pointercancel", onUp);
+    return () => {
+      root.removeEventListener("pointerdown", onDown);
+      root.removeEventListener("pointermove", onMove);
+      root.removeEventListener("pointerup", onUp);
+      root.removeEventListener("pointercancel", onUp);
+    };
+  }, [layer, look]);
+}
 
 function Rider({
   bikeId,
@@ -53,9 +117,11 @@ function Rider({
 
 function LocalBike({
   controls,
+  look,
   onHud,
 }: {
   controls: MutableRefObject<ControlState>;
+  look: MutableRefObject<LookOrbit>;
   onHud: (data: { kmh: number; t: number; finished: boolean; elapsed: number }) => void;
 }) {
   const bike = getBike(getState().bikeId);
@@ -148,11 +214,27 @@ function LocalBike({
 
     const kmhNow = Math.abs(speedRef.current) * 3.6;
     camTarget.current.copy(tmp);
-    const back = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
     const camDist = 3.4 - Math.min(kmhNow, 65) * 0.008;
-    const desired = tmp.clone().add(back.multiplyScalar(camDist)).add(new THREE.Vector3(0, 1.42, 0));
-    state.camera.position.lerp(desired, 1 - Math.pow(0.00005, dt));
-    state.camera.lookAt(tmp.x, tmp.y + 0.82, tmp.z);
+    const radius = Math.hypot(camDist, CAM_HEIGHT);
+    const elev0 = Math.atan2(CAM_HEIGHT, camDist);
+    const elev = THREE.MathUtils.lerp(elev0, HALF_PI, look.current.pitch);
+    const az = look.current.yaw;
+    const horiz = radius * Math.cos(elev);
+    const lift = radius * Math.sin(elev);
+    const cy = Math.cos(az);
+    const sy = Math.sin(az);
+    const backX = -Math.sin(yaw);
+    const backZ = -Math.cos(yaw);
+    const rightX = Math.cos(yaw);
+    const rightZ = -Math.sin(yaw);
+    camDesired.set(
+      tmp.x + (backX * cy + rightX * sy) * horiz,
+      tmp.y + LOOK_Y + lift,
+      tmp.z + (backZ * cy + rightZ * sy) * horiz,
+    );
+    const follow = look.current.active ? 1 - Math.pow(1e-10, dt) : 1 - Math.pow(0.00005, dt);
+    state.camera.position.lerp(camDesired, follow);
+    state.camera.lookAt(tmp.x, tmp.y + LOOK_Y, tmp.z);
     const cam = state.camera as THREE.PerspectiveCamera;
     cam.fov = THREE.MathUtils.damp(cam.fov, 58 + kmhNow * 0.18, 4, dt);
     cam.updateProjectionMatrix();
@@ -293,9 +375,12 @@ function Remotes({ riders }: { riders: RemoteRider[] }) {
 
 export function RideScene() {
   const controls = useControls();
+  const lookLayer = useRef<HTMLDivElement>(null);
+  const look = useRef<LookOrbit>({ yaw: 0, pitch: 0, active: false });
   const [hud, setHud] = useState({ kmh: 0, t: 0, finished: false, elapsed: 0 });
   const [riders, setRiders] = useState<RemoteRider[]>(getState().riders);
   const landmark = nearestLandmark(hud.t);
+  useLookOrbit(lookLayer, look);
 
   useEffect(() => {
     const id = window.setInterval(() => setRiders([...getState().riders]), 100);
@@ -312,9 +397,10 @@ export function RideScene() {
         <directionalLight position={[40, 50, 18]} intensity={1.35} castShadow />
         <Sky sunPosition={[60, 28, 16]} turbidity={3.2} rayleigh={0.7} />
         <World />
-        <LocalBike controls={controls} onHud={setHud} />
+        <LocalBike controls={controls} look={look} onHud={setHud} />
         <Remotes riders={riders} />
       </Canvas>
+      <div className="look-drag" ref={lookLayer} />
       <div className="hud">
         <div className="hud-top">
           <div className="chip">

@@ -393,3 +393,10 @@ button {
   position: absolute;
   inset: 0;
 }
+
+.look-drag {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  touch-action: none;
+}

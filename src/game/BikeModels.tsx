@@ -1,10 +1,40 @@
-import { useMemo, useRef, type MutableRefObject } from "react";
+import { useMemo, useRef, type MutableRefObject, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { BikeId } from "../data/bikes";
 import { chainTexture } from "./textures";
 
-export type BikeMotion = { speed: number; lean: number; drifting?: boolean; steer?: number; pedaling?: boolean };
+export type BikeMotion = {
+  speed: number;
+  lean: number;
+  drifting?: boolean;
+  steer?: number;
+  pedaling?: boolean;
+  crank?: number;
+};
+
+type XYZ = [number, number, number];
+
+const _up = new THREE.Vector3(0, 1, 0);
+const _dir = new THREE.Vector3();
+const CRANK_L = 0.085;
+const BB: Record<BikeId, XYZ> = {
+  scr: [0.08, 0.29, 0],
+  fixie: [0.08, 0.29, 0],
+  ttareungyi: [0.08, 0.29, 0],
+};
+
+function placeLive(mesh: THREE.Object3D | null, from: XYZ, to: XYZ) {
+  if (!mesh) return;
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const dz = to[2] - from[2];
+  const len = Math.hypot(dx, dy, dz) || 0.001;
+  mesh.position.set((from[0] + to[0]) * 0.5, (from[1] + to[1]) * 0.5, (from[2] + to[2]) * 0.5);
+  _dir.set(dx / len, dy / len, dz / len);
+  mesh.quaternion.setFromUnitVectors(_up, _dir);
+  mesh.scale.set(1, len, 1);
+}
 
 function Wheel({
   position,
@@ -156,8 +186,6 @@ function AeroSeatTube({ color }: { color: string }) {
   );
 }
 
-type XYZ = [number, number, number];
-
 function Bar({
   from,
   to,
@@ -253,38 +281,34 @@ function useSteer(motion?: MutableRefObject<BikeMotion>) {
   return ref;
 }
 
-function TrackBars({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
-  const steer = useSteer(motion);
+function TrackBars() {
   const tape = "#2b2b2b";
   return (
-    <group ref={steer} position={[0.46, 0.95, 0]}>
-      <Bar from={[-0.1, -0.13, 0]} to={[0.05, 0.01, 0]} r={0.012} color="#1a1a1a" />
-      <Bar from={[0.05, 0.01, -0.19]} to={[0.05, 0.01, 0.19]} r={0.011} color={tape} />
+    <group>
+      <Bar from={[0, 0, -0.19]} to={[0, 0, 0.19]} r={0.011} color={tape} />
       {([-1, 1] as const).map((side) => (
         <group key={side}>
-          <Bar from={[0.05, 0.01, 0.19 * side]} to={[0.09, -0.1, 0.19 * side]} r={0.011} color={tape} />
-          <Bar from={[0.09, -0.1, 0.19 * side]} to={[-0.02, -0.17, 0.19 * side]} r={0.011} color={tape} />
+          <Bar from={[0, 0, 0.19 * side]} to={[0.04, -0.11, 0.19 * side]} r={0.011} color={tape} />
+          <Bar from={[0.04, -0.11, 0.19 * side]} to={[-0.07, -0.18, 0.19 * side]} r={0.011} color={tape} />
         </group>
       ))}
     </group>
   );
 }
 
-function DropBars({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
-  const steer = useSteer(motion);
+function DropBars() {
   return (
-    <group ref={steer} position={[0.46, 0.95, 0]}>
-      <Bar from={[-0.1, -0.13, 0]} to={[0.05, 0.01, 0]} r={0.011} color="#1b1b1b" />
-      <Bar from={[0.05, 0.01, -0.19]} to={[0.05, 0.01, 0.19]} r={0.01} color="#1a1a1a" />
+    <group>
+      <Bar from={[0, 0, -0.19]} to={[0, 0, 0.19]} r={0.01} color="#1a1a1a" />
       {([-1, 1] as const).map((side) => (
         <group key={side}>
-          <Bar from={[0.05, 0.01, 0.19 * side]} to={[0.08, -0.09, 0.19 * side]} r={0.01} color="#1a1a1a" />
-          <Bar from={[0.08, -0.09, 0.19 * side]} to={[-0.01, -0.15, 0.19 * side]} r={0.01} color="#1a1a1a" />
-          <mesh position={[0.1, 0.018, 0.19 * side]} rotation={[0, 0, -0.48]}>
+          <Bar from={[0, 0, 0.19 * side]} to={[0.03, -0.1, 0.19 * side]} r={0.01} color="#1a1a1a" />
+          <Bar from={[0.03, -0.1, 0.19 * side]} to={[-0.06, -0.16, 0.19 * side]} r={0.01} color="#1a1a1a" />
+          <mesh position={[0.05, 0.008, 0.19 * side]} rotation={[0, 0, -0.48]}>
             <capsuleGeometry args={[0.012, 0.038, 4, 8]} />
             <meshStandardMaterial color="#111" />
           </mesh>
-          <mesh position={[0.102, -0.022, 0.19 * side]}>
+          <mesh position={[0.052, -0.032, 0.19 * side]}>
             <boxGeometry args={[0.01, 0.034, 0.012]} />
             <meshStandardMaterial color="#1a1a1a" metalness={0.4} />
           </mesh>
@@ -294,19 +318,95 @@ function DropBars({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
   );
 }
 
-function CityBars({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
-  const steer = useSteer(motion);
+function CityBars() {
   return (
-    <group ref={steer} position={[0.38, 1.0, 0]}>
-      <Bar from={[-0.02, -0.16, 0]} to={[0.02, 0.03, 0]} r={0.011} color="#cfd3d6" />
-      <Bar from={[0.02, 0.03, 0]} to={[-0.08, 0.08, 0.2]} r={0.01} color="#cfd3d6" />
-      <Bar from={[0.02, 0.03, 0]} to={[-0.08, 0.08, -0.2]} r={0.01} color="#cfd3d6" />
+    <group>
+      <Bar from={[0, 0, 0]} to={[-0.1, 0.05, 0.2]} r={0.01} color="#cfd3d6" />
+      <Bar from={[0, 0, 0]} to={[-0.1, 0.05, -0.2]} r={0.01} color="#cfd3d6" />
       {([-1, 1] as const).map((side) => (
-        <mesh key={side} position={[-0.12, 0.08, 0.2 * side]} rotation={[0, 0, Math.PI / 2]}>
+        <mesh key={side} position={[-0.14, 0.05, 0.2 * side]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.015, 0.015, 0.09, 8]} />
           <meshStandardMaterial color="#151515" />
         </mesh>
       ))}
+    </group>
+  );
+}
+
+function FrontEnd({
+  motion,
+  color,
+  pivot,
+  axle,
+  bars,
+  stem = "#1b1b1b",
+  tire,
+  deep,
+  rim,
+  spokes,
+  brand,
+  brake,
+  children,
+}: {
+  motion?: MutableRefObject<BikeMotion>;
+  color: string;
+  pivot: XYZ;
+  axle: XYZ;
+  bars: "drop" | "track" | "city";
+  stem?: string;
+  tire?: number;
+  deep?: boolean;
+  rim?: string;
+  spokes?: number;
+  brand?: string;
+  brake?: boolean;
+  children?: ReactNode;
+}) {
+  const steer = useSteer(motion);
+  const wx = axle[0] - pivot[0];
+  const wy = axle[1] - pivot[1];
+  const barLift: XYZ = bars === "city" ? [-0.02, 0.12, 0] : [0.055, 0.09, 0];
+  return (
+    <group>
+      <Bar
+        from={[pivot[0] - 0.025, pivot[1] - 0.14, 0]}
+        to={[pivot[0] + 0.008, pivot[1] + 0.07, 0]}
+        r={0.018}
+        color={color}
+      />
+      <mesh position={[pivot[0] - 0.008, pivot[1] - 0.04, 0]} rotation={[0, 0, -0.28]}>
+        <cylinderGeometry args={[0.02, 0.02, 0.07, 10]} />
+        <meshStandardMaterial color={color} metalness={0.4} roughness={0.32} />
+      </mesh>
+      <group ref={steer} position={pivot}>
+        <Bar from={[0, 0.01, 0]} to={barLift} r={0.013} color={stem} />
+        <mesh position={[barLift[0] * 0.45, barLift[1] * 0.45, 0]} rotation={[0, 0, -0.4]}>
+          <cylinderGeometry args={[0.014, 0.014, 0.036, 8]} />
+          <meshStandardMaterial color={stem} metalness={0.45} roughness={0.28} />
+        </mesh>
+        <mesh position={[0, 0.055, 0]}>
+          <cylinderGeometry args={[0.016, 0.018, 0.022, 10]} />
+          <meshStandardMaterial color="#2a2a2a" metalness={0.5} roughness={0.3} />
+        </mesh>
+        <group position={barLift}>{bars === "drop" ? <DropBars /> : bars === "track" ? <TrackBars /> : <CityBars />}</group>
+        {([-0.036, 0.036] as const).map((z) => (
+          <group key={z}>
+            <Bar from={[0.012, -0.02, z]} to={[wx, wy, z]} r={0.012} color={color} />
+            <Dropout position={[wx, wy, z]} />
+          </group>
+        ))}
+        <Wheel
+          position={[wx, wy, 0]}
+          tire={tire}
+          deep={deep}
+          rim={rim}
+          spokes={spokes}
+          brand={brand}
+          motion={motion}
+        />
+        {brake && <CaliperBrake position={[wx * 0.55, wy * 0.42, 0]} />}
+        {children}
+      </group>
     </group>
   );
 }
@@ -343,8 +443,8 @@ function ChainLoop({
     return new THREE.TubeGeometry(curve, 72, radius, 6, true);
   }, [key, radius]);
   useFrame((_, dt) => {
-    if (!motion?.current.pedaling) return;
-    tex.offset.x -= Math.abs(motion.current.speed) * 0.35 * dt;
+    if (!motion) return;
+    tex.offset.x -= motion.current.speed * 0.35 * dt;
   });
   return (
     <mesh geometry={geo}>
@@ -437,11 +537,10 @@ function Drivetrain({
 }) {
   const cranks = useRef<THREE.Group>(null);
   const cassette = useRef<THREE.Group>(null);
-  useFrame((_, dt) => {
-    if (!motion?.current.pedaling) return;
-    const spin = Math.abs(motion.current.speed) * 1.7 * dt;
-    if (cranks.current) cranks.current.rotation.z -= spin;
-    if (cassette.current) cassette.current.rotation.z -= spin * 1.4;
+  useFrame(() => {
+    const a = motion?.current.crank ?? 0;
+    if (cranks.current) cranks.current.rotation.z = a;
+    if (cassette.current) cassette.current.rotation.z = a * 1.4;
   });
   const z = 0.055;
   const chainPts: [number, number, number][] = [
@@ -464,29 +563,33 @@ function Drivetrain({
           </mesh>
         ))}
       </group>
-      <group ref={cranks} position={[0.08, 0.29, 0.05]}>
-        <mesh>
+      <group ref={cranks} position={[0.08, 0.29, 0]}>
+        <mesh position={[0, 0, 0.055]}>
           <torusGeometry args={[0.075, 0.006, 8, 22]} />
           <meshStandardMaterial color="#2a2a2a" metalness={0.5} />
         </mesh>
         {!city && (
-          <mesh position={[0, 0, 0.008]}>
+          <mesh position={[0, 0, 0.063]}>
             <torusGeometry args={[0.055, 0.005, 8, 18]} />
             <meshStandardMaterial color="#1f1f1f" metalness={0.5} />
           </mesh>
         )}
-        <mesh>
-          <boxGeometry args={[0.17, 0.014, 0.01]} />
-          <meshStandardMaterial color="#1a1a1a" metalness={0.45} />
+        <mesh position={[0, 0, 0.048]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.014, 0.014, 0.04, 10]} />
+          <meshStandardMaterial color="#c5c8cb" metalness={0.7} />
         </mesh>
-        <mesh position={[0.082, 0, 0.028]} rotation={[Math.PI / 2, 0, 0]}>
-          <boxGeometry args={[0.055, 0.028, 0.01]} />
-          <meshStandardMaterial color="#111" />
-        </mesh>
-        <mesh position={[-0.082, 0, -0.028]} rotation={[Math.PI / 2, 0, 0]}>
-          <boxGeometry args={[0.055, 0.028, 0.01]} />
-          <meshStandardMaterial color="#111" />
-        </mesh>
+        {([-1, 1] as const).map((side) => (
+          <group key={side} rotation={[0, 0, side > 0 ? 0 : Math.PI]}>
+            <mesh position={[CRANK_L * 0.5, 0, 0.07 * side]} rotation={[0, 0, Math.PI / 2]}>
+              <boxGeometry args={[0.016, CRANK_L, 0.01]} />
+              <meshStandardMaterial color="#1a1a1a" metalness={0.45} />
+            </mesh>
+            <mesh position={[CRANK_L, 0, 0.085 * side]} rotation={[Math.PI / 2, 0, 0]}>
+              <boxGeometry args={[0.07, 0.055, 0.014]} />
+              <meshStandardMaterial color="#111" />
+            </mesh>
+          </group>
+        ))}
       </group>
       <ChainLoop points={chainPts} motion={motion} />
       <RearDerailleur axle={[rearX, 0.33, 0.055]} />
@@ -498,11 +601,10 @@ function Drivetrain({
 function FixieDrive({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
   const ring = useRef<THREE.Group>(null);
   const cog = useRef<THREE.Group>(null);
-  useFrame((_, dt) => {
-    if (!motion?.current.pedaling) return;
-    const spin = Math.abs(motion.current.speed) * 1.7 * dt;
-    if (ring.current) ring.current.rotation.z -= spin;
-    if (cog.current) cog.current.rotation.z -= spin * 1.35;
+  useFrame(() => {
+    const a = motion?.current.crank ?? 0;
+    if (ring.current) ring.current.rotation.z = a;
+    if (cog.current) cog.current.rotation.z = a * 1.35;
   });
   return (
     <group>
@@ -512,15 +614,23 @@ function FixieDrive({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
           <meshStandardMaterial color="#cfd3d6" metalness={0.7} />
         </mesh>
       </group>
-      <group ref={ring} position={[0.08, 0.29, 0.05]}>
-        <mesh>
+      <group ref={ring} position={[0.08, 0.29, 0]}>
+        <mesh position={[0, 0, 0.05]}>
           <torusGeometry args={[0.082, 0.007, 8, 24]} />
           <meshStandardMaterial color="#151515" metalness={0.55} />
         </mesh>
-        <mesh>
-          <boxGeometry args={[0.17, 0.014, 0.01]} />
-          <meshStandardMaterial color="#111" metalness={0.4} />
-        </mesh>
+        {([-1, 1] as const).map((side) => (
+          <group key={side} rotation={[0, 0, side > 0 ? 0 : Math.PI]}>
+            <mesh position={[CRANK_L * 0.5, 0, 0.065 * side]} rotation={[0, 0, Math.PI / 2]}>
+              <boxGeometry args={[0.016, CRANK_L, 0.01]} />
+              <meshStandardMaterial color="#111" metalness={0.4} />
+            </mesh>
+            <mesh position={[CRANK_L, 0, 0.08 * side]} rotation={[Math.PI / 2, 0, 0]}>
+              <boxGeometry args={[0.07, 0.05, 0.014]} />
+              <meshStandardMaterial color="#111" />
+            </mesh>
+          </group>
+        ))}
       </group>
       <ChainLoop
         points={[
@@ -544,7 +654,6 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
   return (
     <group>
       <Wheel position={[-0.5, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={20} brand="VELOCIDAD" motion={motion} />
-      <Wheel position={[0.52, 0.33, 0]} tire={0.013} deep rim="#0d0d0d" spokes={16} brand="VELOCIDAD" motion={motion} steered />
       <Bar from={[-0.18, 0.81, 0]} to={[0.36, 0.79, 0]} color={silver} r={0.015} />
       <Bar from={[0.36, 0.79, 0]} to={[0.08, 0.34, 0]} color={silver} r={0.017} />
       <AeroSeatTube color={silver} />
@@ -552,12 +661,10 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
         <group key={z}>
           <Bar from={[-0.18, 0.81, z]} to={[-0.5, 0.33, z]} color={silver} r={0.014} />
           <Bar from={[0.06, 0.28, z]} to={[-0.54, 0.33, z]} color={silver} r={0.013} />
-          <Bar from={[0.36, 0.79, z]} to={[0.52, 0.33, z]} color={silver} r={0.012} />
           <mesh position={[-0.52, 0.33, z]}>
             <capsuleGeometry args={[0.02, 0.036, 4, 8]} />
             <meshStandardMaterial color="#1a1a1a" metalness={0.5} />
           </mesh>
-          <Dropout position={[0.52, 0.33, z]} />
         </group>
       ))}
       <Bar from={[-0.18, 0.81, 0]} to={[-0.18, 0.88, 0]} color={silver} r={0.014} />
@@ -621,7 +728,18 @@ function FixieBike({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
           <meshStandardMaterial color="#4a4e52" />
         </mesh>
       ))}
-      <TrackBars motion={motion} />
+      <FrontEnd
+        motion={motion}
+        color={silver}
+        pivot={[0.37, 0.86, 0]}
+        axle={[0.52, 0.33, 0]}
+        bars="track"
+        tire={0.013}
+        deep
+        rim="#0d0d0d"
+        spokes={16}
+        brand="VELOCIDAD"
+      />
       <FixieDrive motion={motion} />
     </group>
   );
@@ -641,7 +759,6 @@ function RoadBike({
   return (
     <group>
       <Wheel position={[-0.54, 0.33, 0]} tire={tire} deep={aero} rim={aero ? "#111" : "#2a2a2a"} motion={motion} />
-      <Wheel position={[0.54, 0.33, 0]} tire={tire} deep={aero} rim={aero ? "#111" : "#2a2a2a"} motion={motion} steered />
       <Bar from={[-0.2, 0.82, 0]} to={[0.38, topY, 0]} color={color} r={0.014} />
       <Bar from={[-0.2, 0.82, 0]} to={[0.07, 0.29, 0]} color={color} r={0.014} />
       <Bar from={[0.38, topY, 0]} to={[0.07, 0.29, 0]} color={color} r={0.014} />
@@ -649,9 +766,7 @@ function RoadBike({
         <group key={z}>
           <Bar from={[-0.2, 0.82, z]} to={[-0.54, 0.33, z]} color={color} r={0.013} />
           <Bar from={[0.07, 0.29, z]} to={[-0.54, 0.33, z]} color={color} r={0.012} />
-          <Bar from={[0.38, topY, z]} to={[0.54, 0.33, z]} color={color} r={0.012} />
           <Dropout position={[-0.54, 0.33, z]} />
-          <Dropout position={[0.54, 0.33, z]} />
         </group>
       ))}
       <Bar from={[-0.2, 0.82, 0]} to={[-0.2, 0.93, 0]} color="#1a1a1a" r={0.011} />
@@ -659,8 +774,17 @@ function RoadBike({
         <boxGeometry args={[0.18, 0.03, 0.08]} />
         <meshStandardMaterial color="#171717" />
       </mesh>
-      <DropBars motion={motion} />
-      <CaliperBrake position={[0.5, 0.48, 0]} />
+      <FrontEnd
+        motion={motion}
+        color={color}
+        pivot={[0.4, 0.86, 0]}
+        axle={[0.54, 0.33, 0]}
+        bars="drop"
+        tire={tire}
+        deep={aero}
+        rim={aero ? "#111" : "#2a2a2a"}
+        brake
+      />
       <CaliperBrake position={[-0.5, 0.48, 0]} />
       <Drivetrain motion={motion} />
       {([-1, 1] as const).map((side) => (
@@ -691,7 +815,7 @@ function RoadBike({
 
 function Basket() {
   return (
-    <group position={[0.58, 0.94, 0]}>
+    <group position={[0.18, 0.06, 0]}>
       <mesh>
         <boxGeometry args={[0.22, 0.018, 0.3]} />
         <meshStandardMaterial color="#1c1c1c" />
@@ -715,7 +839,6 @@ function Ttareungyi({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
   return (
     <group>
       <Wheel position={[-0.48, 0.33, 0]} tire={0.018} rim="#b6e34a" spokes={16} motion={motion} />
-      <Wheel position={[0.5, 0.33, 0]} tire={0.018} rim="#b6e34a" spokes={16} motion={motion} steered />
       <Bar from={[0.42, 0.8, 0]} to={[0.15, 0.38, 0]} color="#f3f5f2" r={0.015} />
       <Bar from={[0.15, 0.38, 0]} to={[-0.15, 0.35, 0]} color="#f3f5f2" r={0.016} />
       <Bar from={[-0.15, 0.35, 0]} to={[-0.24, 0.82, 0]} color="#f3f5f2" r={0.014} />
@@ -723,14 +846,27 @@ function Ttareungyi({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
         <group key={z}>
           <Bar from={[-0.15, 0.35, z]} to={[-0.48, 0.33, z]} color="#f3f5f2" r={0.012} />
           <Bar from={[-0.24, 0.82, z]} to={[-0.48, 0.33, z]} color="#f3f5f2" r={0.011} />
-          <Bar from={[0.15, 0.38, z]} to={[0.5, 0.33, z]} color="#f3f5f2" r={0.011} />
           <Dropout position={[-0.48, 0.33, z]} />
-          <Dropout position={[0.5, 0.33, z]} />
         </group>
       ))}
-      <CityBars motion={motion} />
+      <FrontEnd
+        motion={motion}
+        color="#f3f5f2"
+        pivot={[0.4, 0.88, 0]}
+        axle={[0.5, 0.33, 0]}
+        bars="city"
+        stem="#cfd3d6"
+        tire={0.018}
+        rim="#b6e34a"
+        spokes={16}
+      >
+        <Basket />
+        <mesh position={[0.08, -0.3, 0]} rotation={[0, 0, 0.12]}>
+          <boxGeometry args={[0.2, 0.016, 0.06]} />
+          <meshStandardMaterial color="#1a1a1a" />
+        </mesh>
+      </FrontEnd>
       <Drivetrain motion={motion} rearX={-0.48} city />
-      <Basket />
       <mesh position={[-0.24, 0.96, 0]}>
         <boxGeometry args={[0.2, 0.04, 0.12]} />
         <meshStandardMaterial color="#171717" />
@@ -738,10 +874,6 @@ function Ttareungyi({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
       <mesh position={[-0.38, 0.72, 0]}>
         <boxGeometry args={[0.1, 0.08, 0.07]} />
         <meshStandardMaterial color="#111" />
-      </mesh>
-      <mesh position={[0.48, 0.58, 0]} rotation={[0, 0, 0.12]}>
-        <boxGeometry args={[0.2, 0.016, 0.06]} />
-        <meshStandardMaterial color="#1a1a1a" />
       </mesh>
       <mesh position={[-0.48, 0.58, 0]} rotation={[0, 0, -0.12]}>
         <boxGeometry args={[0.2, 0.016, 0.06]} />
@@ -757,43 +889,98 @@ const RIDER_FIT: Record<
     hip: XYZ;
     lean: number;
     hand: XYZ;
-    feet: [XYZ, XYZ];
     helmet: boolean;
   }
 > = {
   scr: {
     hip: [-0.17, 1.0, 0],
     lean: 0.88,
-    hand: [0.54, 0.97, 0.165],
-    feet: [
-      [0.16, 0.205, 0.075],
-      [-0.01, 0.205, -0.075],
-    ],
+    hand: [0.5, 0.96, 0.17],
     helmet: true,
   },
   fixie: {
     hip: [-0.15, 1.04, 0],
     lean: 1.02,
-    hand: [0.5, 0.95, 0.16],
-    feet: [
-      [0.15, 0.21, 0.07],
-      [-0.02, 0.21, -0.07],
-    ],
+    hand: [0.48, 0.95, 0.16],
     helmet: true,
   },
   ttareungyi: {
     hip: [-0.21, 0.99, 0],
     lean: 0.28,
-    hand: [0.22, 1.07, 0.185],
-    feet: [
-      [0.13, 0.21, 0.07],
-      [0.0, 0.21, -0.07],
-    ],
+    hand: [0.24, 1.05, 0.19],
     helmet: false,
   },
 };
 
-function Rider({ bikeId }: { bikeId: BikeId }) {
+function PedalLegs({
+  bikeId,
+  hip,
+  motion,
+  shorts,
+  skin,
+  upright,
+}: {
+  bikeId: BikeId;
+  hip: XYZ;
+  motion?: MutableRefObject<BikeMotion>;
+  shorts: string;
+  skin: string;
+  upright: boolean;
+}) {
+  const thighR = useRef<THREE.Mesh>(null);
+  const thighL = useRef<THREE.Mesh>(null);
+  const shinR = useRef<THREE.Mesh>(null);
+  const shinL = useRef<THREE.Mesh>(null);
+  const shoeR = useRef<THREE.Mesh>(null);
+  const shoeL = useRef<THREE.Mesh>(null);
+  const bb = BB[bikeId];
+  useFrame(() => {
+    const a = motion?.current.crank ?? 0;
+    const legs = [
+      { side: 1 as const, thigh: thighR, shin: shinR, shoe: shoeR },
+      { side: -1 as const, thigh: thighL, shin: shinL, shoe: shoeL },
+    ];
+    for (const { side, thigh, shin, shoe } of legs) {
+      const hipJ: XYZ = [hip[0], hip[1] - 0.015, 0.065 * side];
+      const s = side > 0 ? 1 : -1;
+      const foot: XYZ = [bb[0] + Math.cos(a) * CRANK_L * s, bb[1] + Math.sin(a) * CRANK_L * s, 0.08 * side];
+      const knee = twoBone(hipJ, foot, 0.4, 0.38, [0.95, 0.12, 0.22 * side]);
+      placeLive(thigh.current, hipJ, knee);
+      placeLive(shin.current, knee, foot);
+      if (shoe.current) {
+        shoe.current.position.set(foot[0] + Math.cos(a) * 0.045 * s, foot[1] - 0.012, foot[2]);
+        shoe.current.rotation.z = Math.sin(a) * 0.22 * s;
+      }
+    }
+  });
+  return (
+    <group>
+      {(
+        [
+          [thighR, shinR, shoeR],
+          [thighL, shinL, shoeL],
+        ] as const
+      ).map(([thigh, shin, shoe], i) => (
+        <group key={i}>
+          <mesh ref={thigh} scale={[1, 0.01, 1]}>
+            <cylinderGeometry args={[0.05, 0.05, 1, 8]} />
+            <meshStandardMaterial color={shorts} roughness={0.72} />
+          </mesh>
+          <mesh ref={shin} scale={[1, 0.01, 1]}>
+            <cylinderGeometry args={[upright ? 0.04 : 0.034, upright ? 0.04 : 0.034, 1, 8]} />
+            <meshStandardMaterial color={upright ? shorts : skin} roughness={0.7} />
+          </mesh>
+          <mesh ref={shoe}>
+            <boxGeometry args={[0.17, 0.042, 0.068]} />
+            <meshStandardMaterial color="#111" roughness={0.82} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function Rider({ bikeId, motion }: { bikeId: BikeId; motion?: MutableRefObject<BikeMotion> }) {
   const fit = RIDER_FIT[bikeId];
   const upright = bikeId === "ttareungyi";
   const skin = "#d2a07a";
@@ -860,9 +1047,6 @@ function Rider({ bikeId }: { bikeId: BikeId }) {
         const shoulder: XYZ = [shoulderC[0], shoulderC[1] - 0.015, 0.088 * side];
         const hand: XYZ = [fit.hand[0], fit.hand[1], fit.hand[2] * side];
         const elbow = twoBone(shoulder, hand, 0.275, 0.25, [-0.12, -1, 0.45 * side]);
-        const hipJ: XYZ = [hip[0], hip[1] - 0.015, 0.065 * side];
-        const foot = side > 0 ? fit.feet[0] : fit.feet[1];
-        const knee = twoBone(hipJ, foot, 0.4, 0.38, [0.95, 0.12, 0.22 * side]);
         return (
           <group key={side}>
             <Limb from={shoulder} to={elbow} r={0.034} color={jersey} />
@@ -871,15 +1055,10 @@ function Rider({ bikeId }: { bikeId: BikeId }) {
               <sphereGeometry args={[0.026, 8, 6]} />
               <meshStandardMaterial color={upright ? skin : "#1c1c1c"} roughness={0.65} />
             </mesh>
-            <Limb from={hipJ} to={knee} r={0.05} color={shorts} />
-            <Limb from={knee} to={foot} r={upright ? 0.04 : 0.034} color={upright ? shorts : skin} />
-            <mesh position={[foot[0] + 0.045, foot[1] - 0.012, foot[2]]} rotation={[0, 0, -0.12]}>
-              <boxGeometry args={[0.17, 0.042, 0.068]} />
-              <meshStandardMaterial color="#111" roughness={0.82} />
-            </mesh>
           </group>
         );
       })}
+      <PedalLegs bikeId={bikeId} hip={hip} motion={motion} shorts={shorts} skin={skin} upright={upright} />
     </group>
   );
 }
@@ -907,7 +1086,7 @@ export function BikeModel({
         {bikeId === "scr" && <RoadBike color="#c45b28" motion={motion} />}
         {bikeId === "fixie" && <FixieBike motion={motion} />}
         {bikeId === "ttareungyi" && <Ttareungyi motion={motion} />}
-        <Rider bikeId={bikeId} />
+        <Rider bikeId={bikeId} motion={motion} />
       </group>
     </group>
   );

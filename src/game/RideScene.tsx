@@ -206,7 +206,8 @@ function LocalBike({
     const wantBar = ((input.left ? 1 : 0) - (input.right ? 1 : 0)) * 0.34;
     barSteerRef.current = THREE.MathUtils.damp(barSteerRef.current, wantBar, 14, step);
     motion.current.steer = THREE.MathUtils.clamp(barSteerRef.current, -0.36, 0.36);
-    motion.current.pedaling = input.forward && speedRef.current > 0.15;
+    motion.current.pedaling = Math.abs(speedRef.current) > 0.1;
+    motion.current.crank = (motion.current.crank ?? 0) - speedRef.current * 2.15 * step;
     if (group.current) {
       group.current.position.copy(tmp);
       group.current.rotation.set(0, yaw, 0);

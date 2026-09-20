@@ -156,6 +156,8 @@ function AeroSeatTube({ color }: { color: string }) {
   );
 }
 
+type XYZ = [number, number, number];
+
 function Bar({
   from,
   to,
@@ -182,6 +184,65 @@ function Bar({
       <meshStandardMaterial color={color} metalness={0.38} roughness={0.3} />
     </mesh>
   );
+}
+
+function Limb({
+  from,
+  to,
+  r,
+  color,
+}: {
+  from: XYZ;
+  to: XYZ;
+  r: number;
+  color: string;
+}) {
+  const { pos, quat, cyl } = useMemo(() => {
+    const a = new THREE.Vector3(...from);
+    const b = new THREE.Vector3(...to);
+    const mid = a.clone().add(b).multiplyScalar(0.5);
+    const dir = b.clone().sub(a);
+    const len = dir.length();
+    const quat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+    return { pos: mid.toArray() as XYZ, quat, cyl: Math.max(0.02, len - r * 0.9) };
+  }, [from, to, r]);
+  return (
+    <mesh position={pos} quaternion={quat}>
+      <capsuleGeometry args={[r, cyl, 4, 8]} />
+      <meshStandardMaterial color={color} roughness={0.7} />
+    </mesh>
+  );
+}
+
+function twoBone(origin: XYZ, target: XYZ, l1: number, l2: number, prefer: XYZ): XYZ {
+  const dx = target[0] - origin[0];
+  const dy = target[1] - origin[1];
+  const dz = target[2] - origin[2];
+  const dist = Math.hypot(dx, dy, dz) || 0.001;
+  const maxd = l1 + l2 - 0.012;
+  const mind = Math.abs(l1 - l2) + 0.012;
+  const d = Math.min(maxd, Math.max(mind, dist));
+  const ux = dx / dist;
+  const uy = dy / dist;
+  const uz = dz / dist;
+  const k = (l1 * l1 - l2 * l2 + d * d) / (2 * d);
+  const h = Math.sqrt(Math.max(0, l1 * l1 - k * k));
+  let px = prefer[0];
+  let py = prefer[1];
+  let pz = prefer[2];
+  const dot = px * ux + py * uy + pz * uz;
+  px -= dot * ux;
+  py -= dot * uy;
+  pz -= dot * uz;
+  const pl = Math.hypot(px, py, pz) || 1;
+  px /= pl;
+  py /= pl;
+  pz /= pl;
+  return [origin[0] + ux * k + px * h, origin[1] + uy * k + py * h, origin[2] + uz * k + pz * h];
+}
+
+function along(origin: XYZ, angle: number, length: number): XYZ {
+  return [origin[0] + Math.sin(angle) * length, origin[1] + Math.cos(angle) * length, origin[2]];
 }
 
 function useSteer(motion?: MutableRefObject<BikeMotion>) {
@@ -690,80 +751,135 @@ function Ttareungyi({ motion }: { motion?: MutableRefObject<BikeMotion> }) {
   );
 }
 
-function Rider({ upright }: { upright: boolean }) {
-  const skin = "#d9a07a";
-  const hair = "#2a211c";
-  const jersey = upright ? "#1d6b3c" : "#1b1b1b";
-  const pants = upright ? "#1a1a1a" : "#151515";
-  const tuck = upright ? 0.04 : 0.38;
+const RIDER_FIT: Record<
+  BikeId,
+  {
+    hip: XYZ;
+    lean: number;
+    hand: XYZ;
+    feet: [XYZ, XYZ];
+    helmet: boolean;
+  }
+> = {
+  scr: {
+    hip: [-0.17, 1.0, 0],
+    lean: 0.88,
+    hand: [0.54, 0.97, 0.165],
+    feet: [
+      [0.16, 0.205, 0.075],
+      [-0.01, 0.205, -0.075],
+    ],
+    helmet: true,
+  },
+  fixie: {
+    hip: [-0.15, 1.04, 0],
+    lean: 1.02,
+    hand: [0.5, 0.95, 0.16],
+    feet: [
+      [0.15, 0.21, 0.07],
+      [-0.02, 0.21, -0.07],
+    ],
+    helmet: true,
+  },
+  ttareungyi: {
+    hip: [-0.21, 0.99, 0],
+    lean: 0.28,
+    hand: [0.22, 1.07, 0.185],
+    feet: [
+      [0.13, 0.21, 0.07],
+      [0.0, 0.21, -0.07],
+    ],
+    helmet: false,
+  },
+};
+
+function Rider({ bikeId }: { bikeId: BikeId }) {
+  const fit = RIDER_FIT[bikeId];
+  const upright = bikeId === "ttareungyi";
+  const skin = "#d2a07a";
+  const jersey = upright ? "#1d6b3c" : "#1a1a1a";
+  const shorts = upright ? "#1a1a1a" : "#151515";
+  const hip = fit.hip;
+  const lean = fit.lean;
+  const shoulderC = along(hip, lean, 0.46);
+  const neck = along(shoulderC, lean * 0.7, 0.08);
+  const head = along(neck, lean * 0.5, 0.12);
+  const look = lean * 0.42;
+
   return (
-    <group position={[upright ? 0.01 : 0.09, upright ? 0.74 : 0.62, 0]} rotation={[0, 0, tuck]}>
-      <mesh position={[0.01, 0.27, 0]}>
-        <capsuleGeometry args={[0.078, 0.2, 6, 10]} />
-        <meshStandardMaterial color={jersey} roughness={0.62} />
+    <group>
+      <mesh position={hip}>
+        <sphereGeometry args={[0.078, 10, 8]} />
+        <meshStandardMaterial color={shorts} roughness={0.72} />
       </mesh>
-      <mesh position={[0.01, 0.16, 0]}>
+      <Limb from={hip} to={shoulderC} r={0.078} color={jersey} />
+      <mesh position={shoulderC}>
         <sphereGeometry args={[0.07, 10, 8]} />
-        <meshStandardMaterial color={pants} roughness={0.7} />
+        <meshStandardMaterial color={jersey} roughness={0.7} />
       </mesh>
-      <mesh position={[0.015, 0.4, 0]}>
-        <cylinderGeometry args={[0.032, 0.038, 0.07, 8]} />
-        <meshStandardMaterial color={skin} roughness={0.55} />
+      <mesh position={[shoulderC[0], shoulderC[1], 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <capsuleGeometry args={[0.046, 0.1, 4, 8]} />
+        <meshStandardMaterial color={jersey} roughness={0.7} />
       </mesh>
-      <mesh position={[0.02, 0.5, 0]}>
-        <sphereGeometry args={[0.072, 14, 12]} />
-        <meshStandardMaterial color={skin} roughness={0.48} />
-      </mesh>
-      <mesh position={[0.01, 0.535, 0]} rotation={[0.15, 0, 0]}>
-        <sphereGeometry args={[0.074, 12, 10]} />
-        <meshStandardMaterial color={hair} roughness={0.85} />
-      </mesh>
-      {upright ? null : (
-        <mesh position={[0.03, 0.545, 0]} rotation={[0.4, 0, 0.15]}>
-          <sphereGeometry args={[0.078, 10, 8]} />
-          <meshStandardMaterial color="#171717" roughness={0.7} />
+      <Limb from={shoulderC} to={neck} r={0.03} color={skin} />
+      <group position={head} rotation={[0, 0, -look]}>
+        <mesh>
+          <sphereGeometry args={[0.1, 14, 12]} />
+          <meshStandardMaterial color={skin} roughness={0.5} />
         </mesh>
-      )}
-      {([-1, 1] as const).map((side) => (
-        <mesh key={`ear${side}`} position={[0.01, 0.5, 0.068 * side]}>
-          <sphereGeometry args={[0.018, 8, 6]} />
-          <meshStandardMaterial color={skin} roughness={0.55} />
+        <mesh position={[-0.012, 0.026, 0]} rotation={[0.18, 0, 0.04]}>
+          <sphereGeometry args={[0.102, 12, 10]} />
+          <meshStandardMaterial color="#2a211c" roughness={0.86} />
         </mesh>
-      ))}
-      {([-1, 1] as const).map((side) => (
-        <mesh key={`eye${side}`} position={[0.078, 0.51, 0.022 * side]}>
-          <sphereGeometry args={[0.008, 6, 6]} />
-          <meshStandardMaterial color="#1a1410" />
-        </mesh>
-      ))}
-      {([-1, 1] as const).map((side) => (
-        <group key={`arm${side}`}>
-          <mesh position={[0.12, 0.28, 0.07 * side]} rotation={[0.08 * side, 0, -1.05]}>
-            <capsuleGeometry args={[0.026, 0.2, 5, 8]} />
-            <meshStandardMaterial color={jersey} />
+        {fit.helmet && (
+          <>
+            <mesh position={[-0.026, 0.046, 0]} rotation={[0.12, 0, 0.36]} scale={[1.28, 0.68, 1.04]}>
+              <sphereGeometry args={[0.11, 12, 10]} />
+              <meshStandardMaterial color="#1a1a1a" roughness={0.32} metalness={0.12} />
+            </mesh>
+            <mesh position={[0.055, -0.01, 0]} rotation={[0, 0, 0.45]}>
+              <boxGeometry args={[0.09, 0.016, 0.13]} />
+              <meshStandardMaterial color="#111" roughness={0.45} />
+            </mesh>
+          </>
+        )}
+        {([-1, 1] as const).map((side) => (
+          <mesh key={`ear${side}`} position={[-0.02, 0, 0.1 * side]}>
+            <sphereGeometry args={[0.022, 8, 6]} />
+            <meshStandardMaterial color={skin} roughness={0.55} />
           </mesh>
-          <mesh position={[0.3, 0.2, 0.12 * side]}>
-            <sphereGeometry args={[0.02, 8, 6]} />
-            <meshStandardMaterial color="#222" />
+        ))}
+        {([-1, 1] as const).map((side) => (
+          <mesh key={`eye${side}`} position={[0.1, 0.01, 0.03 * side]}>
+            <sphereGeometry args={[0.01, 6, 6]} />
+            <meshStandardMaterial color="#1a1410" />
           </mesh>
-        </group>
-      ))}
-      {([-1, 1] as const).map((side) => (
-        <group key={`leg${side}`}>
-          <mesh position={[-0.02, 0.06, 0.055 * side]} rotation={[0.12 * side, 0, 0.62]}>
-            <capsuleGeometry args={[0.036, 0.16, 5, 8]} />
-            <meshStandardMaterial color={pants} />
-          </mesh>
-          <mesh position={[0.1, -0.1, 0.065 * side]} rotation={[0.04 * side, 0, -0.32]}>
-            <capsuleGeometry args={[0.028, 0.15, 4, 8]} />
-            <meshStandardMaterial color={pants} />
-          </mesh>
-          <mesh position={[0.2, -0.22, 0.07 * side]} rotation={[0, 0, 0.15]}>
-            <boxGeometry args={[0.1, 0.04, 0.045]} />
-            <meshStandardMaterial color="#111" roughness={0.8} />
-          </mesh>
-        </group>
-      ))}
+        ))}
+      </group>
+      {([-1, 1] as const).map((side) => {
+        const shoulder: XYZ = [shoulderC[0], shoulderC[1] - 0.015, 0.088 * side];
+        const hand: XYZ = [fit.hand[0], fit.hand[1], fit.hand[2] * side];
+        const elbow = twoBone(shoulder, hand, 0.275, 0.25, [-0.12, -1, 0.45 * side]);
+        const hipJ: XYZ = [hip[0], hip[1] - 0.015, 0.065 * side];
+        const foot = side > 0 ? fit.feet[0] : fit.feet[1];
+        const knee = twoBone(hipJ, foot, 0.4, 0.38, [0.95, 0.12, 0.22 * side]);
+        return (
+          <group key={side}>
+            <Limb from={shoulder} to={elbow} r={0.034} color={jersey} />
+            <Limb from={elbow} to={hand} r={0.026} color={skin} />
+            <mesh position={hand}>
+              <sphereGeometry args={[0.026, 8, 6]} />
+              <meshStandardMaterial color={upright ? skin : "#1c1c1c"} roughness={0.65} />
+            </mesh>
+            <Limb from={hipJ} to={knee} r={0.05} color={shorts} />
+            <Limb from={knee} to={foot} r={upright ? 0.04 : 0.034} color={upright ? shorts : skin} />
+            <mesh position={[foot[0] + 0.045, foot[1] - 0.012, foot[2]]} rotation={[0, 0, -0.12]}>
+              <boxGeometry args={[0.17, 0.042, 0.068]} />
+              <meshStandardMaterial color="#111" roughness={0.82} />
+            </mesh>
+          </group>
+        );
+      })}
     </group>
   );
 }
@@ -791,7 +907,7 @@ export function BikeModel({
         {bikeId === "scr" && <RoadBike color="#c45b28" motion={motion} />}
         {bikeId === "fixie" && <FixieBike motion={motion} />}
         {bikeId === "ttareungyi" && <Ttareungyi motion={motion} />}
-        <Rider upright={bikeId === "ttareungyi"} />
+        <Rider bikeId={bikeId} />
       </group>
     </group>
   );
